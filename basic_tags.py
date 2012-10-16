@@ -11,6 +11,8 @@ import random
 import re
 import collections
 import itertools
+import multiprocessing
+
 from pos_dict import pos_dict
 pos_cnt_all = collections.Counter()
 
@@ -33,34 +35,13 @@ SPECIAL_WORDS.update("www." + x + ".com" for x in websites)
 
 NER_re = re.compile(r"""(?:organization|caps|date|percent|person|money|location|num|month|time)\d+$""")
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--max', '-n', type=int, help="Maximum number of lines before bailing")
-parser.add_argument('--sample', '-s', type=float, help="Sample S*100% of the rows")
-parser.add_argument('inputFilename')
-args = parser.parse_args()
-maxRows = args.max
-sample = args.sample
-inputFilename = args.inputFilename
-
-
-input = csv.reader(open(inputFilename, "rU"), delimiter="\t")
-header = input.next()
-
 keys = ["essay_id", "essay_set", "essay", "rater1_domain1", "rater2_domain1", "domain1_score",
     "num_chars", "num_sents", "num_words", "num_syl", "sentance_length", "num_correctly_spelled", "fk_grade_level",
     "starts_with_dear", "distinct_words", "end_with_preposition",
     "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_conjunctions", "num_prepositions",
     "num_superlatives"]
-outputFilename = os.path.splitext(os.path.basename(inputFilename))[0] + "_tagged.csv"
-output = csv.DictWriter(open(outputFilename, "w"), keys)
-output.writerow(dict(zip(keys, keys)))
 
-
-i = 0
-for row in input:
-    if sample and random.random() > sample:
-        continue
+def processRow(row):
     result = dict(zip(
         ["essay_id", "essay_set", "essay", "rater1_domain1", "rater2_domain1", "domain1_score"],
         (row[0], row[1], row[2], row[3], row[4], row[5])))
@@ -143,19 +124,83 @@ for row in input:
     #flag adverbs/adjectives and superlatives
     #number of 
 
-    
     # print text
     # print sents
     # print words_in_sentances
     # print words
     # print tagged_sentences
-    
 
-    output.writerow(result)
+    return result
 
-    i+= 1
-    if maxRows and i >= maxRows:
-        break
+class Worker(multiprocessing.Process):
 
-print
-#print "\n".join("%s (%s): %s" % (pos, pos_dict.get(pos), cnt) for (pos, cnt) in sorted(pos_cnt_all.items()))
+    def __init__(self, input_queue, result_queue):
+        multiprocessing.Process.__init__(self)
+        self.input_queue = input_queue
+        self.result_queue = result_queue
+
+    def run(self):
+        while True:
+            row = self.input_queue.get()
+            result = processRow(row)
+            self.result_queue.put(result)
+
+class OutputWorker(multiprocessing.Process):
+    def __init__(self, result_queue, out_csv):
+        multiprocessing.Process.__init__(self)
+        self.result_queue = result_queue
+        self.out_csv = out_csv
+
+    def run(self):
+        while True:
+            result = self.result_queue.get()
+            self.out_csv.writerow(result)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--max', '-n', type=int, help="Maximum number of lines before bailing")
+    parser.add_argument('--sample', '-s', type=float, help="Sample S*100% of the rows")
+    parser.add_argument('inputFilename')
+    args = parser.parse_args()
+    maxRows = args.max
+    sample = args.sample
+    inputFilename = args.inputFilename
+
+    input = csv.reader(open(inputFilename, "rU"), delimiter="\t")
+    header = input.next()
+
+    outputFilename = os.path.splitext(os.path.basename(inputFilename))[0] + "_tagged.csv"
+    output = csv.DictWriter(open(outputFilename, "w"), keys)
+    output.writerow(dict(zip(keys, keys)))
+
+    input_queue = multiprocessing.Queue(20)
+    result_queue = multiprocessing.Queue()
+    workers = []
+    for i in range(multiprocessing.cpu_count()):
+        worker = Worker(input_queue, result_queue)
+        worker.start()
+        workers.append(worker)
+
+    output_worker = OutputWorker(result_queue, output)
+    output_worker.start()
+    workers.append(output_worker)
+
+    for i, row in enumerate(input):
+        if not (sample and random.random() > sample):
+            input_queue.put(row)
+        if maxRows and i >= maxRows:
+            break
+
+    while not input_queue.empty() and not result_queue.empty():
+        os.sleep(5)
+
+    for worker in workers:
+        worker.terminate()
+
+
+if __name__ == "__main__":
+    main()
+
+    print
+    #print "\n".join("%s (%s): %s" % (pos, pos_dict.get(pos), cnt) for (pos, cnt) in sorted(pos_cnt_all.items()))
