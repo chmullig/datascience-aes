@@ -1,4 +1,4 @@
-training <- read.csv("training_set_rel3_tagged.csv")
+training <- read.csv("train_tagged.csv")
 
 essays <- training$essay
 training$essay = 0
@@ -14,9 +14,21 @@ plot(training$spell_pct, training$domain1_score)
 
 cor(training, use="complete.obs")
 
-model <- lm(domain1_score ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes, data=training)
+training$holdout <- 0
+training$holdout[sample(nrow(training), as.integer(nrow(training)*.))] <- 1
+
+model <- lm(domain1_score ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes, data=training[training$holdout==0,])
 model
 summary(model)
 
 step <- stepAIC(model, direction="both")
 step$anova
+
+training$scorehat <- predict(model, training)
+training$prediction <- round(training$scorehat)
+training$prediction[training$prediction < min(training$domain1_score)] <- min(training$domain1_score)
+training$prediction[training$prediction > max(training$domain1_score)] <- max(training$domain1_score)
+training$residual <- training$domain1_score - training$prediction
+
+plot(training$domain1_score, training$prediction)
+hist(training$residual)

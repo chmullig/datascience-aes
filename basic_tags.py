@@ -9,6 +9,10 @@ import enchant
 import argparse
 import random
 import re
+import collections
+import itertools
+from pos_dict import pos_dict
+pos_cnt_all = collections.Counter()
 
 syl = syllables.cmusyllables()
 syl.Load()
@@ -21,8 +25,8 @@ PUNCTUATION = set(('.', ',', '"', "'", '`', ':', ';', '!', '~', '-', '=', '+', '
     ))
 
 CONTRACTIONS = set(("'s", "wo", "n't", "'re", "'m", "'ve", "'ll", "isn"))
-websites = ("myspace", "facebook", "youtube", "e-mail", "google", "hand-eye", "eye-hand", "webcam", "microsoft", "caps1", "yahoo")
-SPECIAL_WORDS = set(("e-mail", "hand-eye", "eye-hand", "webcam", "skype", "america"))
+websites = ("myspace", "facebook", "youtube", "e-mail", "google", "hand-eye", "eye-hand", "webcam", "microsoft", "caps1", "yahoo", "wikipedia")
+SPECIAL_WORDS = set(("e-mail", "hand-eye", "eye-hand", "webcam", "webcams", "skype", "powerpoint", "english", "america", "american", "netbook"))
 SPECIAL_WORDS.update(websites)
 SPECIAL_WORDS.update(x + ".com" for x in websites)
 SPECIAL_WORDS.update("www." + x + ".com" for x in websites)
@@ -40,12 +44,14 @@ sample = args.sample
 inputFilename = args.inputFilename
 
 
-input = csv.reader(open(inputFilename), delimiter="\t")
+input = csv.reader(open(inputFilename, "rU"), delimiter="\t")
 header = input.next()
 
 keys = ["essay_id", "essay_set", "essay", "rater1_domain1", "rater2_domain1", "domain1_score",
-    "num_chars", "num_sents", "num_words", "num_syl", "num_correctly_spelled", "fk_grade_level",
-    "starts_with_dear"]
+    "num_chars", "num_sents", "num_words", "num_syl", "sentance_length", "num_correctly_spelled", "fk_grade_level",
+    "starts_with_dear", "distinct_words", "end_with_preposition",
+    "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_conjunctions", "num_prepositions",
+    "num_superlatives"]
 outputFilename = os.path.splitext(os.path.basename(inputFilename))[0] + "_tagged.csv"
 output = csv.DictWriter(open(outputFilename, "w"), keys)
 output.writerow(dict(zip(keys, keys)))
@@ -57,7 +63,7 @@ for row in input:
         continue
     result = dict(zip(
         ["essay_id", "essay_set", "essay", "rater1_domain1", "rater2_domain1", "domain1_score"],
-        (row[0], row[1], row[2], row[3], row[4], row[6])))
+        (row[0], row[1], row[2], row[3], row[4], row[5])))
     sys.stdout.write("\r %s#%s" % (row[1], row[0]))
     sys.stdout.flush()
 
@@ -77,6 +83,8 @@ for row in input:
                 words.append(word)
     num_words = len(words)
     result["num_words"] = num_words
+
+    result["sentance_length"] = num_words / float(num_sents)
 
 
     num_correctly_spelled = 0
@@ -105,15 +113,49 @@ for row in input:
     else:
         result["starts_with_dear"] = 0
 
-    output.writerow(result)
+    result["distinct_words"] = len(set(words))
 
+    #Part of Speech tagging
+    tagged_sentences = [nltk.pos_tag(sent) for sent in words_in_sentances]
+    pos_cnt = collections.Counter()
+    for word, pos in itertools.chain(*tagged_sentences):
+        pos_cnt[pos] += 1
+        pos_cnt_all[pos] += 1
+
+    #flag ending in a preposition
+    result["end_with_preposition"] = 0
+    for sent in tagged_sentences:
+        if sent[-1][1] == "IN":
+            result["end_with_preposition"] += 1
+
+    result["num_nouns"] = sum(pos_cnt[key] for key in ("NN", "NNP", "NNS"))
+    result["num_verbs"] = sum(pos_cnt[key] for key in ("VB", "VBD", "VBG", "VBN", "VBP", "VBZ"))
+    result["num_adjectives"] = sum(pos_cnt[key] for key in ("JJ", "JJR", "JJS"))
+    result["num_adverbs"] = sum(pos_cnt[key] for key in ("RB", "RBR", "RBS"))
+    result["num_conjunctions"] = sum(pos_cnt[key] for key in ("CC"))
+    result["num_prepositions"] = sum(pos_cnt[key] for key in ("IN"))
+    result["num_superlatives"] = sum(pos_cnt[key] for key in ("JJS", "RBS"))
+
+    #TODO:
+    #flag for foreign words
+    #flag coordinating conjunctions
+    #flag prepositions
+    #flag adverbs/adjectives and superlatives
+    #number of 
+
+    
     # print text
     # print sents
     # print words_in_sentances
     # print words
+    # print tagged_sentences
+    
+
+    output.writerow(result)
 
     i+= 1
     if maxRows and i >= maxRows:
         break
 
 print
+#print "\n".join("%s (%s): %s" % (pos, pos_dict.get(pos), cnt) for (pos, cnt) in sorted(pos_cnt_all.items()))
