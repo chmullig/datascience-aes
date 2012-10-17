@@ -1,0 +1,3 @@
+[submodule "ASAP-AES"]
+	path = ASAP-AES
+	url = https://github.com/benhamner/ASAP-AES.git
