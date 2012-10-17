@@ -3,6 +3,7 @@ import nltk
 import sys
 import os
 import os.path
+import time
 import syllables
 from nltk.corpus import wordnet
 import enchant
@@ -133,7 +134,12 @@ def processRow(row):
     return result
 
 class Worker(multiprocessing.Process):
-
+    """
+    Process the input queue of CSV rows with processRow(row), putting
+    the output on a separate output queue. When it encounters None it knows the
+    queue is depleted and it should quit, but first it puts a None on the output
+    so the output processor knows it's done.
+    """
     def __init__(self, input_queue, result_queue):
         multiprocessing.Process.__init__(self)
         self.input_queue = input_queue
@@ -142,19 +148,36 @@ class Worker(multiprocessing.Process):
     def run(self):
         while True:
             row = self.input_queue.get()
-            result = processRow(row)
-            self.result_queue.put(result)
+            if row is None:
+                self.result_queue.put(None)
+                break
+            else:
+                result = processRow(row)
+                self.result_queue.put(result)
 
 class OutputWorker(multiprocessing.Process):
-    def __init__(self, result_queue, out_csv):
+    """
+    Processes the output queue and writes the dictionaries to a CSV. Looks for
+    n_workers occurrences of None on the queue to indicate that it's done and
+    should quit.
+    """
+    def __init__(self, result_queue, out_csv, n_workers):
         multiprocessing.Process.__init__(self)
         self.result_queue = result_queue
         self.out_csv = out_csv
+        self.n_done = 0
+        self.n_workers = n_workers
 
     def run(self):
         while True:
             result = self.result_queue.get()
-            self.out_csv.writerow(result)
+            if result is None:
+                self.n_done += 1
+                if self.n_done == self.n_workers:
+                    print #clear the output line since it's time to quit
+                    break
+            else:
+                self.out_csv.writerow(result)
 
 
 def main():
@@ -176,13 +199,14 @@ def main():
 
     input_queue = multiprocessing.Queue(20)
     result_queue = multiprocessing.Queue()
+    n_workers = multiprocessing.cpu_count()
     workers = []
-    for i in range(multiprocessing.cpu_count()):
+    for i in range(n_workers):
         worker = Worker(input_queue, result_queue)
         worker.start()
         workers.append(worker)
 
-    output_worker = OutputWorker(result_queue, output)
+    output_worker = OutputWorker(result_queue, output, n_workers)
     output_worker.start()
     workers.append(output_worker)
 
@@ -192,15 +216,14 @@ def main():
         if maxRows and i >= maxRows:
             break
 
-    while not input_queue.empty() and not result_queue.empty():
-        os.sleep(5)
+    for i in range(n_workers):
+        input_queue.put(None)
+    # while not input_queue.empty() or not result_queue.empty():
+    #     time.sleep(5)
 
-    for worker in workers:
-        worker.terminate()
+    # for worker in workers:
+    #     worker.terminate()
 
 
 if __name__ == "__main__":
     main()
-
-    print
-    #print "\n".join("%s (%s): %s" % (pos, pos_dict.get(pos), cnt) for (pos, cnt) in sorted(pos_cnt_all.items()))
