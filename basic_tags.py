@@ -49,7 +49,7 @@ def processRow(row):
     sys.stdout.write("\r %s#%s" % (row[1], row[0]))
     sys.stdout.flush()
 
-    text = row[2].strip().decode('cp1252').lower()
+    text = row[2].strip().decode('cp1252', 'ignore').lower()
 
     result["num_chars"] = len(text)
 
