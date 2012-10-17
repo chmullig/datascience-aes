@@ -33,7 +33,6 @@ lapply(models, summary)
 
 #replace with something more elegant :(
 for (i in 1:max(training$essay_set)) {
-    training$scorehat[training$essay_set==i] <- mean(training$domain1_score[training$essay_set==i])
     training$scorehat[training$essay_set==i] <- predict(models[[i]], training[training$essay_set==i,])
     training$scorehat[training$essay_set==i && is.na(training$scorehat)] <- mean(training$domain1_score[training$essay_set==i])
 }
@@ -43,12 +42,8 @@ training$residual <- training$domain1_score - training$prediction
 #training$prediction[training$essay_set==i && training$prediction < min(training$domain1_score[training$essay_set==i])] <- min(training$domain1_score[training$essay_set==i])
 #training$prediction[training$essay_set==i && training$prediction > max(training$domain1_score[training$essay_set==i])] <- max(training$domain1_score[training$essay_set==i])
 
-hist(training$residual)
-table(training$domain1_score, training$prediction, useNA="always")
 
-
-
-kappas <- dlply(training, .(essay_set), function(X) ScoreQuadraticWeightedKappa(X$domain1_score, X$prediction))
+kappas <- dlply(training[!is.na(training$domain1_score),], .(essay_set), function(X) ScoreQuadraticWeightedKappa(X$domain1_score, X$prediction))
 kappas
 MeanQuadraticWeightedKappa(kappas)
 
@@ -56,3 +51,5 @@ table(training$essay_set[training$holdout==0])
 
 plot(training$domain1_score, training$prediction)
 hist(training$residual)
+
+dlply(training, .(essay_set), function(x) mean(abs(x$residual)))
