@@ -3,7 +3,7 @@ require(plyr)
 require(MASS)
 
 training <- read.csv("train_tagged.csv")
-training <- training[order(training$essay_set, training$essay_id), ]
+training <- training[order(training$set, training$essay_id), ]
 
 essays <- training$essay
 training$essay = 0
@@ -13,9 +13,9 @@ training$avg_length <- training$num_chars / training$num_words
 training$avg_syls <- training$num_syl / training$num_words
 training$spell_pct <- training$num_correctly_spelled / training$num_words
 
-training$domain1_score_log <- log(training$domain1_score)
-hist(training$domain1_score_log)
-plot(training$spell_pct, training$domain1_score)
+training$grade_log <- log(training$grade)
+hist(training$grade_log)
+plot(training$spell_pct, training$grade)
 
 cor(training, use="complete.obs")
 
@@ -24,32 +24,35 @@ training$holdout[sample(nrow(training), as.integer(nrow(training)*.1))] <- 1
 
 
 
-models <- dlply(training[training$holdout==0,], .(essay_set), lm, formula = domain1_score ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes + sentance_length + num_superlatives + (distinct_words / num_words))
+models <- dlply(training[training$holdout==0,], .(set), lm, formula = grade ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes + sentance_length + num_superlatives + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs) + has_semicolon + has_exclamation + has_questionmark + num_foreign)
 lapply(models, summary)
-#steps <- lapply(models, stepAIC, direction="both")
+steps <- lapply(models, function(X) stepAIC(X, direction="both"))
 #lapply(steps, anova)
-#mapply(predict, models, ddply(training, .(essay_set)))
+#mapply(predict, models, ddply(training, .(set)))
 
+m <- lm(grade ~ num_chars + avg_syls  + spell_mistakes + sentance_length +  (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs),
+    data=training[training$set==3, ])
+stepAIC(m, direction="both")
 
 #replace with something more elegant :(
-for (i in 1:max(training$essay_set)) {
-    training$scorehat[training$essay_set==i] <- predict(models[[i]], training[training$essay_set==i,])
-    training$scorehat[training$essay_set==i && is.na(training$scorehat)] <- mean(training$domain1_score[training$essay_set==i])
+for (i in 1:max(training$set)) {
+    training$scorehat[training$set==i] <- predict(models[[i]], training[training$set==i,])
+    training$scorehat[training$set==i && is.na(training$scorehat)] <- mean(training$grade[training$set==i])
 }
-
+hist(training$num_conjunctions)
 training$prediction <- round(training$scorehat)
-training$residual <- training$domain1_score - training$prediction
-#training$prediction[training$essay_set==i && training$prediction < min(training$domain1_score[training$essay_set==i])] <- min(training$domain1_score[training$essay_set==i])
-#training$prediction[training$essay_set==i && training$prediction > max(training$domain1_score[training$essay_set==i])] <- max(training$domain1_score[training$essay_set==i])
+training$residual <- training$grade - training$prediction
+#training$prediction[training$set==i && training$prediction < min(training$grade[training$set==i])] <- min(training$grade[training$set==i])
+#training$prediction[training$set==i && training$prediction > max(training$grade[training$set==i])] <- max(training$grade[training$set==i])
 
 
-kappas <- dlply(training[!is.na(training$domain1_score),], .(essay_set), function(X) ScoreQuadraticWeightedKappa(X$domain1_score, X$prediction))
+kappas <- dlply(training[!is.na(training$grade),], .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$prediction))
 kappas
 MeanQuadraticWeightedKappa(kappas)
 
-table(training$essay_set[training$holdout==0])
+table(training$set[training$holdout==0])
 
-plot(training$domain1_score, training$prediction)
+plot(training$grade, training$prediction)
 hist(training$residual)
 
-dlply(training, .(essay_set), function(x) mean(abs(x$residual)))
+dlply(training, .(set), function(x) mean(abs(x$residual)))

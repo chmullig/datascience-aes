@@ -36,16 +36,17 @@ SPECIAL_WORDS.update("www." + x + ".com" for x in websites)
 
 NER_re = re.compile(r"""(?:organization|caps|date|percent|person|money|location|num|month|time)\d+$""")
 
-keys = ["essay_id", "essay_set", "essay", "rater1_domain1", "rater2_domain1", "domain1_score",
+keys = ["id", "set", "essay", "rate1", "rate2", "grade",
     "num_chars", "num_sents", "num_words", "num_syl", "sentance_length", "num_correctly_spelled", "fk_grade_level",
     "starts_with_dear", "distinct_words", "end_with_preposition",
-    "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_conjunctions", "num_prepositions",
-    "num_superlatives"]
+    "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_conjunctions",
+    "num_prepositions", "num_superlatives", "num_foreign",
+    "has_semicolon", "has_questionmark", "has_exclamation",]
 
 def processRow(row):
     result = dict(zip(
-        ["essay_id", "essay_set", "essay", "rater1_domain1", "rater2_domain1", "domain1_score"],
-        (row[0], row[1], row[2], row[3], row[4], row[5])))
+        ["id", "set", "essay", "rate1", "rate2", "grade",],
+        row))
     sys.stdout.write("\r %s#%s" % (row[1], row[0]))
     sys.stdout.flush()
 
@@ -107,16 +108,25 @@ def processRow(row):
     #flag ending in a preposition
     result["end_with_preposition"] = 0
     for sent in tagged_sentences:
-        if sent[-1][1] == "IN":
-            result["end_with_preposition"] += 1
+        try:
+            if sent[-2][1] == "IN":
+                result["end_with_preposition"] += 1
+        except:
+            pass
 
     result["num_nouns"] = sum(pos_cnt[key] for key in ("NN", "NNP", "NNS"))
     result["num_verbs"] = sum(pos_cnt[key] for key in ("VB", "VBD", "VBG", "VBN", "VBP", "VBZ"))
     result["num_adjectives"] = sum(pos_cnt[key] for key in ("JJ", "JJR", "JJS"))
     result["num_adverbs"] = sum(pos_cnt[key] for key in ("RB", "RBR", "RBS"))
-    result["num_conjunctions"] = sum(pos_cnt[key] for key in ("CC"))
-    result["num_prepositions"] = sum(pos_cnt[key] for key in ("IN"))
+    result["num_conjunctions"] = sum(pos_cnt[key] for key in ("CC", ))
+    result["num_prepositions"] = sum(pos_cnt[key] for key in ("IN", ))
     result["num_superlatives"] = sum(pos_cnt[key] for key in ("JJS", "RBS"))
+    result["num_foreign"] = sum(pos_cnt[key] for key in ("FW", ))
+
+    result["has_semicolon"] = 1 if ";" in text else 0
+    result["has_questionmark"] = 1 if "?" in text else 0
+    result["has_exclamation"] = 1 if "!" in text else 0
+
 
     #TODO:
     #flag for foreign words

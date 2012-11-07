@@ -3,29 +3,29 @@ Source: http://www.mozart-oz.org/mogul/doc/lager/brill-tagger/penn.html
 """
 pos_dict = {
     "CC"   : "coordinating conjunction",    #and
-    "CD"   : "cardinal number     1,", #third
+    "CD"   : "cardinal number",     #1, third
     "DT"   : "determiner",  #the
-    "EX"   : "existential there  there", #is
-    "FW"   : "foreign word    d'",#hoevre
-    "IN"   : "preposition/subordinating conjunction   in, of,", #like
+    "EX"   : "existential", # there  there is
+    "FW"   : "foreign word", #    d'hoevre
+    "IN"   : "preposition/subordinating conjunction", #   in, of, like
     "JJ"   : "adjective",   #green
     "JJR"  : "adjective, comparative",  #greener
     "JJS"  : "adjective, superlative",  #greenest
     "LS"   : "list marker",     #1)
-    "MD"   : "modal   could,", #will
+    "MD"   : "modal", #could, will
     "NN"   : "noun, singular or mass",  #table
     "NNS"  : "noun plural",     #tables
     "NNP"  : "proper noun, singular",   #John
     "NNPS"     : "proper noun, plural",     #Vikings
-    "PDT"  : "predeterminer  both the", #boys
-    "POS"  : "possessive ending   friend'",#s
-    "PRP"  : "personal pronoun    I, he,", #it
-    "PRP$" : "possessive pronoun  my,", #his
-    "RB"   : "adverb  however, usually, naturally, here,", #good
+    "PDT"  : "predeterminer", #both the boys
+    "POS"  : "possessive ending", #friend's
+    "PRP"  : "personal pronoun", #I, he, it
+    "PRP$" : "possessive pronoun", #my, his
+    "RB"   : "adverb", #  however, usually, naturally, here, good
     "RBR"  : "adverb, comparative",     #better
     "RBS"  : "adverb, superlative",     #best
-    "RP"   : "particle    give", #up
-    "TO"   : "to to go, to", #him
+    "RP"   : "particle", #    give up
+    "TO"   : "to", # to go, to him
     "UH"   : "interjection",    #uhhuhhuhh
     "VB"   : "verb, base form",     #take
     "VBD"  : "verb, past tense",    #took
