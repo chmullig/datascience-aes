@@ -1,5 +1,6 @@
 
-system("python leaderGrabber.py")
+#system("python leaderGrabber.py")
+
 FILENAME <- "columbia-university-introduction-to-data-science-fall-2012_public_leaderboard.csv"
 TITLE <- "Columbia Intro Data Science 2012, Kaggle Competition"
 YRANGE <- c(0, 1)
@@ -8,8 +9,10 @@ YRANGE <- c(0, 1)
 scores <- read.csv(FILENAME)
 scores$SubmissionDate <- strptime(scores$SubmissionDate, "%m/%d/%Y %H:%M:%s")
 
-mindate <- min(scores$SubmissionDate)
+#mindate <- min(scores$SubmissionDate)
 #mindate <- strptime(format(mindate, "%Y-%m-01"), "%Y-%m-%d")
+#hardcoding mindate as 10-10-2012 because that's when it was handed out
+mindate <- strptime("2012-10-10", "%Y-%m-%d")
 maxdate <- max(scores$SubmissionDate)
 maxdate <- strptime(format(maxdate, "%Y-%m-01"), "%Y-%m-%d")
 maxdate <- seq(maxdate, by="month", length=2)[2]
@@ -48,8 +51,7 @@ while (length(badPoints) > 0)
 nTeams <- nrow(bests)
 print(paste("Spreading required", i, "iterations"))
 
-png(filename="leaderboard.png", width=870, height=870)
-#pdf(file="mitre_leaderboard.pdf", width=12, height=12)
+png(filename="datascience_leaderboard.png", width=870, height=870)
 
 #Setup the plot, title, axis labels, etc
 par(mar=par()$mar+c(0,0,0,6),bty="l",yaxs="i", xaxs="i")
