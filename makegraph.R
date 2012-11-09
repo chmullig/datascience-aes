@@ -51,7 +51,7 @@ while (length(badPoints) > 0)
 nTeams <- nrow(bests)
 print(paste("Spreading required", i, "iterations"))
 
-png(filename="datascience_leaderboard.png", width=870, height=870)
+png(filename="datascience_leaderboard.png", width=1024, height=1024)
 
 #Setup the plot, title, axis labels, etc
 par(mar=par()$mar+c(0,0,0,6),bty="l",yaxs="i", xaxs="i")
