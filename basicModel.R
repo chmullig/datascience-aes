@@ -78,4 +78,4 @@ testing$prediction <- round(testing$scorehat)
 hist(testing$prediction)
 
 testing$weight = 1
-write.csv(testing[, c("id", "set", "weight", "prediction")], "testing_predicted.csv", row.names=TRUE, na="")
+write.csv(testing[, c("id", "set", "weight", "prediction")], "testing_predicted.csv", row.names=FALSE, na="")
