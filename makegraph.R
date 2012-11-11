@@ -3,7 +3,7 @@
 
 FILENAME <- "columbia-university-introduction-to-data-science-fall-2012_public_leaderboard.csv"
 TITLE <- "Columbia Intro Data Science 2012, Kaggle Competition"
-YRANGE <- c(0, 1)
+YRANGE <- c(.4, .8)
 
 #Load the main data
 scores <- read.csv(FILENAME)
@@ -22,6 +22,8 @@ xrange <- c(mindate, maxdate)
 #Ensure teh text size and trim length are set properly to show as much name as possible
 TEXTSIZE <- .75
 MAXLEN <- 16/TEXTSIZE
+adjustmentfactor=(YRANGE[2]-YRANGE[1])*.015
+adjustmentpadding=adjustmentfactor*.005
 palette(c("#E41A1C", "purple", "#A6D854", "#A6761D", "orange", "#377EB8", 
 "#FF00AA", "#1B9E77", "turquoise", "#66A61E", "blue", 
 "red", "forest green", "#FC8D62", "orange",
@@ -30,22 +32,20 @@ palette(c("#E41A1C", "purple", "#A6D854", "#A6761D", "orange", "#377EB8",
 colors <- palette()
 
 
-ADJUSTMENTFACTOR=.015
-ADJUSTMENTPADDING=.0002
 #Make sure the final labels will be sufficiently spread out
-#This finds any points that are close together than ADJUSTMENTFACTOR times the
+#This finds any points that are close together than adjustmentfactor times the
 #text size And moves the top one up, and the bottom one down by about half the
-#space Required to make them ADJUSTMENTFACTOR*TEXTSIZE apart. It movies the top
+#space Required to make them adjustmentfactor*TEXTSIZE apart. It movies the top
 #one up slightly more because that was more aesthetically pleasing
 bests <- aggregate(scores$Score, list(TeamName = scores$TeamName), max)
 bests <- bests[order(bests$x), ]
-badPoints <- which(diff(bests$x) < ADJUSTMENTFACTOR*TEXTSIZE)
+badPoints <- which(diff(bests$x) < adjustmentfactor*TEXTSIZE)
 i <- 0
 while (length(badPoints) > 0)
   {
-  bests$x[badPoints] <- bests$x[badPoints] - (((ADJUSTMENTFACTOR * TEXTSIZE + ADJUSTMENTPADDING) - diff(bests$x)[badPoints])*0.5)
-  bests$x[badPoints+1] <- bests$x[badPoints+1] + (((ADJUSTMENTFACTOR * TEXTSIZE + ADJUSTMENTPADDING) - diff(bests$x)[badPoints])*0.5)
-  badPoints <- which(diff(bests$x) < ADJUSTMENTFACTOR*TEXTSIZE)
+  bests$x[badPoints] <- bests$x[badPoints] - (((adjustmentfactor * TEXTSIZE + adjustmentpadding) - diff(bests$x)[badPoints])*0.5)
+  bests$x[badPoints+1] <- bests$x[badPoints+1] + (((adjustmentfactor * TEXTSIZE + adjustmentpadding) - diff(bests$x)[badPoints])*0.5)
+  badPoints <- which(diff(bests$x) < adjustmentfactor*TEXTSIZE)
   i <- i + 1
   }
 nTeams <- nrow(bests)

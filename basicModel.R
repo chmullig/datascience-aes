@@ -7,12 +7,12 @@ training <- training[order(training$set, training$essay_id), ]
 
 essays <- training$essay
 training$essay = 0
-
 training$spell_mistakes <- training$num_words - training$num_correctly_spelled
 training$avg_length <- training$num_chars / training$num_words
 training$avg_syls <- training$num_syl / training$num_words
 training$spell_pct <- training$num_correctly_spelled / training$num_words
 
+training$grade
 training$grade_log <- log(training$grade)
 hist(training$grade_log)
 plot(training$spell_pct, training$grade)
@@ -39,20 +39,41 @@ for (i in 1:max(training$set)) {
     training$scorehat[training$set==i] <- predict(models[[i]], training[training$set==i,])
     training$scorehat[training$set==i && is.na(training$scorehat)] <- mean(training$grade[training$set==i])
 }
-hist(training$num_conjunctions)
 training$prediction <- round(training$scorehat)
 training$residual <- training$grade - training$prediction
 #training$prediction[training$set==i && training$prediction < min(training$grade[training$set==i])] <- min(training$grade[training$set==i])
 #training$prediction[training$set==i && training$prediction > max(training$grade[training$set==i])] <- max(training$grade[training$set==i])
 
 
-kappas <- dlply(training[!is.na(training$grade),], .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$prediction))
+kappas <- dlply(training[!is.na(training$grade),], .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$prediction[X$holdout==1]))
 kappas
 MeanQuadraticWeightedKappa(kappas)
 
-table(training$set[training$holdout==0])
+table(training$set[training$holdout==1])
 
 plot(training$grade, training$prediction)
-hist(training$residual)
+hist(training$residual[training$holdout==1])
 
 dlply(training, .(set), function(x) mean(abs(x$residual)))
+
+
+##SCORE
+
+
+testing <- read.csv("test_tagged.csv")
+testing <- testing[order(testing$set, testing$essay_id), ]
+
+essays <- testing$essay
+testing$essay = 0
+testing$spell_mistakes <- testing$num_words - testing$num_correctly_spelled
+testing$avg_length <- testing$num_chars / testing$num_words
+testing$avg_syls <- testing$num_syl / testing$num_words
+testing$spell_pct <- testing$num_correctly_spelled / testing$num_words
+
+for (i in 1:max(testing$set)) {
+    testing$scorehat[testing$set==i] <- predict(models[[i]], testing[testing$set==i,])
+    testing$scorehat[testing$set==i && is.na(testing$scorehat)] <- mean(testing$grade[testing$set==i])
+}
+testing$prediction <- round(testing$scorehat)
+hist(testing$prediction)
+
