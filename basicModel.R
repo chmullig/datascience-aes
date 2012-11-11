@@ -74,8 +74,12 @@ for (i in 1:max(testing$set)) {
     testing$scorehat[testing$set==i] <- predict(models[[i]], testing[testing$set==i,])
     testing$scorehat[testing$set==i && is.na(testing$scorehat)] <- mean(testing$grade[testing$set==i])
 }
+testing$scorehat[is.na(testing$scorehat)] = 1
 testing$prediction <- round(testing$scorehat)
 hist(testing$prediction)
 
 testing$weight = 1
 write.csv(testing[, c("id", "set", "weight", "prediction")], "testing_predicted.csv", row.names=FALSE, na="")
+
+
+testing[testing$id==11832, ]
