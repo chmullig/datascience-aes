@@ -3,7 +3,8 @@ require(plyr)
 require(MASS)
 
 training <- read.csv("train_tagged.csv")
-training <- training[order(training$set, training$essay_id), ]
+training <- training[!is.na(training$grade),]
+nrow(training)
 
 essays <- training$essay
 training$essay = 0
@@ -26,13 +27,13 @@ training$holdout[sample(nrow(training), as.integer(nrow(training)*.1))] <- 1
 
 models <- dlply(training[training$holdout==0,], .(set), lm, formula = grade ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes + sentance_length + num_superlatives + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs) + has_semicolon + has_exclamation + has_questionmark + num_foreign)
 lapply(models, summary)
-steps <- lapply(models, function(X) stepAIC(X, direction="both"))
+#steps <- lapply(models, function(X) stepAIC(X, direction="both"))
 #lapply(steps, anova)
 #mapply(predict, models, ddply(training, .(set)))
 
-m <- lm(grade ~ num_chars + avg_syls  + spell_mistakes + sentance_length +  (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs),
-    data=training[training$set==3, ])
-stepAIC(m, direction="both")
+#m <- lm(grade ~ num_chars + avg_syls  + spell_mistakes + sentance_length +  (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs),
+#    data=training[training$set==3, ])
+#stepAIC(m, direction="both")
 
 #replace with something more elegant :(
 for (i in 1:max(training$set)) {
@@ -54,7 +55,22 @@ table(training$set[training$holdout==1])
 plot(training$grade, training$prediction)
 hist(training$residual[training$holdout==1])
 
-dlply(training, .(set), function(x) mean(abs(x$residual)))
+#dlply(training, .(set), function(x) mean(abs(x$residual)))
+summary(training)
+
+
+#randomForest
+require(randomForest)
+rfm <- randomForest(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + starts_with_dear + distinct_words + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs),
+              strata=set, data=training[training$holdout==0,], importance=TRUE, ntree=1500)
+training$rfprediction <- round(predict(rfm, training))
+kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$rfprediction))
+kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$rfprediction[X$holdout==1]))
+kappasrfm
+MeanQuadraticWeightedKappa(kappasrfm)
+
+training[training$holdout==1 && training$grade != training$rfprediction,]
+
 
 
 ##SCORE
