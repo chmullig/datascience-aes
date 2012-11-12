@@ -18,6 +18,7 @@ training$grade
 training$grade_log <- log(training$grade)
 qplot(grade, data=training, facets=set~., binwidth=1)
 
+table(training$grade)
 
 cor(training, use="complete.obs")
 
@@ -106,7 +107,8 @@ for (i in 1:max(testing$set)) {
     testing$scorehat[testing$set==i] <- predict(models[[i]], testing[testing$set==i,])
     testing$rfscorehat[testing$set==i] <- predict(rfms[[i]], testing[testing$set==i,])
 }
-#testing$scorehat[is.na(testing$scorehat)] = 1
+testing$scorehat[is.na(testing$scorehat)] = 1
+testing$rfscorehat[is.na(testing$rfscorehat)] = 1
 testing$prediction <- round(testing$scorehat)
 testing$rfprediction <- round(testing$rfscorehat)
 
@@ -114,3 +116,4 @@ testing$weight = 1
 write.csv(testing[, c("id", "set", "weight", "prediction")], "testing_predicted_lm.csv", row.names=FALSE, na="")
 write.csv(testing[, c("id", "set", "weight", "rfprediction")], "testing_predicted_rf.csv", row.names=FALSE, na="")
 
+testing[testing$id==11832,]
