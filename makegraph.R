@@ -7,7 +7,7 @@ YRANGE <- c(.4, .8)
 
 #Load the main data
 scores <- read.csv(FILENAME)
-scores$SubmissionDate <- strptime(scores$SubmissionDate, "%m/%d/%Y %r")
+scores$SubmissionDate <- strptime(scores$SubmissionDate, "%m/%d/%Y %r", tz="UTC")
 scores <- scores[order(scores$SubmissionDate), ]
 
 #mindate <- min(scores$SubmissionDate)
@@ -74,7 +74,7 @@ for (TeamName in unique(scores$TeamName)) {
     xvals <- append(xvals, maxdate)
     yvals <- append(yvals, currScore)
     
-    #if they stayed still they'll be black, otherwise we get another color
+    #if benchmark, black, they stayed still they'll be grey, otherwise we get another color
     if (grepl("Benchmark", TeamName, ignore.case=TRUE)) { 
       color <- "black"
     } else if (min(yvals) == max(yvals)) {
