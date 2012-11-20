@@ -16,6 +16,8 @@
 	<string>Dump the datascience kaggleleaderboards</string>
 	<key>StartInterval</key>
 	<integer>3600</integer>
+    <key>ExitTimeOut</key>
+    <integer>120</integer>
 	<key>WorkingDirectory</key>
 	<string>/Users/chmullig/programming/datascience</string>
 	<key>StandardOutPath</key>

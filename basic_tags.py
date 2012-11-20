@@ -13,6 +13,7 @@ import re
 import collections
 import itertools
 import multiprocessing
+import cPickle
 
 from pos_dict import pos_dict
 pos_cnt_all = collections.Counter()
@@ -177,6 +178,7 @@ class OutputWorker(multiprocessing.Process):
         self.out_csv = out_csv
         self.n_done = 0
         self.n_workers = n_workers
+        self.allrows = []
 
     def run(self):
         while True:
@@ -184,10 +186,12 @@ class OutputWorker(multiprocessing.Process):
             if result is None:
                 self.n_done += 1
                 if self.n_done == self.n_workers:
+                    cPickle.dump(self.allrows, open("something.pickle", "wb"), cPickle.HIGHEST_PROTOCOL)
                     print #clear the output line since it's time to quit
                     break
             else:
                 self.out_csv.writerow(result)
+                self.allrows.append(result)
 
 
 def main():

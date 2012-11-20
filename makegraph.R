@@ -7,11 +7,12 @@ YRANGE <- c(.4, .8)
 
 #Load the main data
 scores <- read.csv(FILENAME)
-scores$SubmissionDate <- strptime(scores$SubmissionDate, "%m/%d/%Y %H:%M:%s")
+scores$SubmissionDate <- strptime(scores$SubmissionDate, "%m/%d/%Y %r")
+scores <- scores[order(scores$SubmissionDate), ]
 
 #mindate <- min(scores$SubmissionDate)
 #mindate <- strptime(format(mindate, "%Y-%m-01"), "%Y-%m-%d")
-#hardcoding mindate as 10-10-2012 because that's when it was handed out
+#hard coding mindate as 10-10-2012 because that's when it was handed out
 mindate <- strptime("2012-10-10", "%Y-%m-%d")
 maxdate <- max(scores$SubmissionDate)
 maxdate <- strptime(format(maxdate, "%Y-%m-01"), "%Y-%m-%d")
@@ -74,7 +75,9 @@ for (TeamName in unique(scores$TeamName)) {
     yvals <- append(yvals, currScore)
     
     #if they stayed still they'll be black, otherwise we get another color
-    if (min(yvals) == max(yvals)) {
+    if (grepl("Benchmark", TeamName, ignore.case=TRUE)) { 
+      color <- "black"
+    } else if (min(yvals) == max(yvals)) {
         color <- "gray30"
     } else {
         color <- colors[colori]
