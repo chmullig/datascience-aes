@@ -172,13 +172,14 @@ class OutputWorker(multiprocessing.Process):
     n_workers occurrences of None on the queue to indicate that it's done and
     should quit.
     """
-    def __init__(self, result_queue, out_csv, n_workers):
+    def __init__(self, result_queue, out_csv, n_workers, outfile):
         multiprocessing.Process.__init__(self)
         self.result_queue = result_queue
         self.out_csv = out_csv
         self.n_done = 0
         self.n_workers = n_workers
         self.allrows = []
+        self.outfile = outfile
 
     def run(self):
         while True:
@@ -186,6 +187,7 @@ class OutputWorker(multiprocessing.Process):
             if result is None:
                 self.n_done += 1
                 if self.n_done == self.n_workers:
+                    outfile.close()
                     cPickle.dump(self.allrows, open("something.pickle", "wb"), cPickle.HIGHEST_PROTOCOL)
                     print #clear the output line since it's time to quit
                     break
@@ -208,7 +210,8 @@ def main():
     header = input.next()
 
     outputFilename = os.path.splitext(os.path.basename(inputFilename))[0] + "_tagged.csv"
-    output = csv.DictWriter(open(outputFilename, "w"), keys)
+    outfile = open(outputFilename, "w")
+    output = csv.DictWriter(outfile, keys)
     output.writerow(dict(zip(keys, keys)))
 
     input_queue = multiprocessing.Queue(20)
@@ -220,7 +223,7 @@ def main():
         worker.start()
         workers.append(worker)
 
-    output_worker = OutputWorker(result_queue, output, n_workers)
+    output_worker = OutputWorker(result_queue, output, n_workers, outfile)
     output_worker.start()
     workers.append(output_worker)
 

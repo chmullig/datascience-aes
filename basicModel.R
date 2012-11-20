@@ -3,7 +3,7 @@ require(plyr)
 require(MASS)
 require(ggplot2)
 
-training <- read.csv("train_tagged.csv")
+training <- read.csv("train_tagged_tfidf.csv")
 training <- training[!is.na(training$grade),]
 nrow(training)
 
@@ -26,7 +26,9 @@ training$holdout <- 0
 training$holdout[sample(nrow(training), as.integer(nrow(training)*.2))] <- 1
 
 
-models <- dlply(training[training$holdout==0,], .(set), lm, formula = grade ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes + sentance_length + num_superlatives + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs) + has_semicolon + has_exclamation + has_questionmark + num_foreign)
+models <- dlply(training[training$holdout==0,], .(set), lm,
+                formula = grade ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes + sentance_length + num_superlatives + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs) + has_semicolon + has_exclamation + has_questionmark + num_foreign
+                +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19)
 lapply(models, summary)
 #steps <- lapply(models, function(X) stepAIC(X, direction="both"))
 #lapply(steps, anova)
@@ -63,7 +65,9 @@ summary(training)
 require(randomForest)
 rfms = list()
 for (i in 1:max(training$set)) {
-    rfms[[i]] <- randomForest(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs),
+    rfms[[i]] <- randomForest(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)
+        +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19
+        ,
         data=training[training$set == i & training$holdout==0,], importance=TRUE, ntree=2000, mtry=5)
     training$rfscorehat[training$set==i] <- predict(rfms[[i]], training[training$set==i,])
 }
@@ -76,19 +80,12 @@ kappasrfm
 MeanQuadraticWeightedKappa(kappasrfm)
 
 
-training$avgpred <- round((training$scorehat + training$rfscorehat)/2)
-kappasavg <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$avgpred))
-kappasavg <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$avgpred[X$holdout==1]))
-kappasavg
-MeanQuadraticWeightedKappa(kappasavg)
-
-
 training[training$holdout==1 && training$grade != training$rfprediction,]
 
 
 
 ##SCORE
-testing <- read.csv("test_tagged.csv")
+testing <- read.csv("test_tagged_tfidf.csv")
 testing <- testing[order(testing$set, testing$essay_id), ]
 
 essays <- testing$essay
