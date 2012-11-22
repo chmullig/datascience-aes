@@ -18,7 +18,7 @@ columns=["tfidfpca_%s" % x for x in xrange(ncomponents)]
 trainCleanEssay = traindf.essay.str.decode('cp1252', 'ignore')
 testCleanEssay = testdf.essay.str.decode('cp1252', 'ignore')
 
-vectorizer = TfidfVectorizer(ngram_range=(1,2))
+vectorizer = TfidfVectorizer(ngram_range=(1,2), stop_words="english")
 trainvec = vectorizer.fit_transform(trainCleanEssay)
 testvec = vectorizer.transform(testCleanEssay)
 
