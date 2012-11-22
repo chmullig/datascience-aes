@@ -78,7 +78,7 @@ for (TeamName in unique(scores$TeamName)) {
     if (grepl("Benchmark", TeamName, ignore.case=TRUE)) { 
       color <- "black"
     } else if (min(yvals) == max(yvals)) {
-        color <- "gray30"
+        color <- "gray40"
     } else {
         color <- colors[colori]
         colori <- colori + 1

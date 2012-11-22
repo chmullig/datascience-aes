@@ -13,20 +13,21 @@ except IndexError:
 
 traindf = pandas.read_csv(trainfile)
 testdf = pandas.read_csv(testfile)
+columns=["tfidfpca_%s" % x for x in xrange(ncomponents)]
 
 trainCleanEssay = traindf.essay.str.decode('cp1252', 'ignore')
 testCleanEssay = testdf.essay.str.decode('cp1252', 'ignore')
 
-vectorizer = TfidfVectorizer()
+vectorizer = TfidfVectorizer(ngram_range=(1,2))
 trainvec = vectorizer.fit_transform(trainCleanEssay)
 testvec = vectorizer.transform(testCleanEssay)
 
 pca = RandomizedPCA(n_components=ncomponents)
 pca.fit(trainvec)
 trainpca = pca.transform(trainvec)
-trainpcadf = pandas.DataFrame(trainpca, columns=["tfidfpca_%s" % x for x in xrange(ncomponents)])
+trainpcadf = pandas.DataFrame(trainpca, columns=columns)
 testpca = pca.transform(testvec)
-testpcadf = pandas.DataFrame(testpca, columns=["tfidfpca_%s" % x for x in xrange(ncomponents)])
+testpcadf = pandas.DataFrame(testpca, columns=columns)
 
 traindf = traindf.combine_first(trainpcadf)
 testdf = testdf.combine_first(testpcadf)
@@ -34,3 +35,5 @@ testdf = testdf.combine_first(testpcadf)
 nf = lambda x: os.path.splitext(os.path.basename(x))[0] + "_tfidf.csv"
 traindf.to_csv(nf(trainfile))
 testdf.to_csv(nf(testfile))
+
+print "+".join(columns)
