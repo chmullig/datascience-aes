@@ -187,7 +187,8 @@ class OutputWorker(multiprocessing.Process):
             if result is None:
                 self.n_done += 1
                 if self.n_done == self.n_workers:
-                    outfile.close()
+                    self.outfile.flush()
+                    self.outfile.close()
                     cPickle.dump(self.allrows, open("something.pickle", "wb"), cPickle.HIGHEST_PROTOCOL)
                     print #clear the output line since it's time to quit
                     break
@@ -213,6 +214,7 @@ def main():
     outfile = open(outputFilename, "w")
     output = csv.DictWriter(outfile, keys)
     output.writerow(dict(zip(keys, keys)))
+    outfile.flush()
 
     input_queue = multiprocessing.Queue(20)
     result_queue = multiprocessing.Queue()

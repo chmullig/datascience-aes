@@ -2,6 +2,10 @@
 import csv
 import sys
 
+origFile = "test.tsv"
+origLength = len(open(origFile, 'rU').readlines())
+print origLength
+
 filename = sys.argv[1]
 
 csvfile = csv.reader(open(filename))
@@ -19,7 +23,9 @@ for row in csvfile:
         ok = False
         print "oh shit, issue with row %s:   %s" % (i, ','.join(row))
     i += 1
-print "..."       
+print "Found %s rows. %s\n" % (i, "same" if i == origLength else "DIFFERENT!")
+if i != origLength:
+    ok = False
 if ok:
     print "Everything is ok, submit away baby!"
 else:
