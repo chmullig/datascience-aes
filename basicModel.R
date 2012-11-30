@@ -64,8 +64,6 @@ for (i in 1:max(training$set)) {
 }
 training$rfprediction <- round(training$rfscorehat)
 
-
-
 kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$rfprediction))
 kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$rfprediction[X$holdout==1]))
 print(round(unlist(kappasrfm), 4))
@@ -73,6 +71,23 @@ print(MeanQuadraticWeightedKappa(kappasrfm))
 
 qplot(training$grade, training$rfprediction, position=position_jitter(width=.2, height=.2))
 qplot(training$grade - training$rfprediction)
+
+
+#rf alt
+rf_alt <- randomForest(as.factor(grade) ~ set + num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)  + has_semicolon + has_exclamation + has_questionmark + num_foreign
+            +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
+            +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
+            ,
+            data=training[training$holdout==0,], importance=TRUE, ntree=5000, nodesize=10, mtry=10)
+training$rfascorehat <- predict(rf_alt, training)
+training$rfaprediction <- as.numeric(levels(training$rfascorehat))[training$rfascorehat]
+
+kappasrfa <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$rfaprediction))
+print(paste(c("RF Alt, Kappas, ALL:", round(unlist(kappasrfa), 4))))
+kappasrfa <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$rfaprediction[X$holdout==1]))
+print(paste(c("RF Alt, Kappas, Holdout:", round(unlist(kappasrfa), 4))))
+print(paste(c("RF Alt, MQWK:", MeanQuadraticWeightedKappa(kappasrfa))))
+
 
 training[training$holdout==1 && training$grade != training$rfprediction,]
 
@@ -89,12 +104,19 @@ for (i in 1:max(training$set)) {
                 +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
                 +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
                 ,
-              data=training[training$set==i,], distribution="gaussian", n.trees=10000, cv.folds=5)
+              data=training[training$set==i,], distribution="gaussian", n.trees=25000, cv.folds=5)
     best.iter.i <- gbm.perf(gbms[[i]], method="cv")
     print(best.iter.i)
     training$gbmscore[training$set==i] <- predict.gbm(gbms[[i]], training[training$set==i,], best.iter.i)
 }
 training$gbmprediction <- round(training$gbmscore)
+
+gbm_alt <- gbm(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)  + has_semicolon + has_exclamation + has_questionmark + num_foreign
+                 +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
+                 +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
+                 ,
+                 data=training, distribution="gaussian", n.trees=25000, cv.folds=10)
+best.iter.gbm_alt <- gbm.perf(gbm_alt, method="cv")
 
 kappasgbm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$gbmprediction))
 kappasgbm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$gbmprediction[X$holdout==1]))
@@ -127,8 +149,13 @@ testing$prediction <- round(testing$scorehat)
 testing$rfprediction <- round(testing$rfscorehat)
 testing$gbmprediction <- round(testing$gbmscore)
 
+testing$rfascorehat <- predict(rf_alt, testing)
+testing$rfaprediction <- as.numeric(levels(testing$rfascorehat))[testing$rfascorehat]
+
+
 testing$weight = 1
 write.csv(testing[, c("id", "set", "weight", "prediction")], "testing_predicted_lm.csv", row.names=FALSE, na="")
 write.csv(testing[, c("id", "set", "weight", "rfprediction")], "testing_predicted_rf.csv", row.names=FALSE, na="")
+write.csv(testing[, c("id", "set", "weight", "rfaprediction")], "testing_predicted_rfa.csv", row.names=FALSE, na="")
 write.csv(testing[, c("id", "set", "weight", "gbmprediction")], "testing_predicted_gbm.csv", row.names=FALSE, na="")
 testing[testing$id==11832,]
