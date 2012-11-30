@@ -38,12 +38,7 @@ SPECIAL_WORDS.update("www." + x + ".com" for x in websites)
 NER_re = re.compile(r"""(?:organization|caps|date|percent|person|money|location|num|month|time)\d+$""")
 NERs = ["person", "organization", "location", "date", "time", "money", "percent", "caps", "num", "month"]
 
-keys = ["id", "set", "essay", "rate1", "rate2", "grade",
-    "num_chars", "num_sents", "num_words", "num_syl", "sentance_length", "num_correctly_spelled", "fk_grade_level",
-    "starts_with_dear", "distinct_words", "end_with_preposition",
-    "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_conjunctions",
-    "num_prepositions", "num_superlatives", "num_foreign",
-    "has_semicolon", "has_questionmark", "has_exclamation",]
+keys = ["id", "set", "essay", "rate1", "rate2", "grade",]
 keys.extend("ner_%s" % x for x in NERs)
 
 def processRow(row):
@@ -56,89 +51,10 @@ def processRow(row):
     text_asis = row[2].decode('cp1252', 'ignore')
     text = row[2].strip().decode('cp1252', 'ignore').lower()
 
-    result["num_chars"] = len(text)
-
-    sents = nltk.sent_tokenize(text)
-    num_sents = len(sents)
-    result["num_sents"] = num_sents
-
-    words_in_sentances = [nltk.word_tokenize(sentance) for sentance in sents]
-    words = []
-    for sent in words_in_sentances:
-        for word in sent:
-            if word not in PUNCTUATION and not all(char in PUNCTUATION for char in word):
-                words.append(word)
-    num_words = len(words)
-    result["num_words"] = num_words
-
-    result["sentance_length"] = num_words / float(num_sents)
-
-
-    num_correctly_spelled = 0
-    for word in words:
-        try:
-            if enchantDict.check(word) or NER_re.match(word) or word in CONTRACTIONS or word in SPECIAL_WORDS:
-                num_correctly_spelled += 1
-            # else:
-            #     print word.encode('utf-8')
-        except enchant.errors.Error:
-            print "can't spell check", word
-    result["num_correctly_spelled"] = num_correctly_spelled
-
-
-    num_syl = 0
-    for word in words:
-        num_syl += syl.SyllableCount(word)
-    result["num_syl"] = num_syl
-
-    fk_grade_level = (0.39 * (num_words / num_sents)) \
-        + (11.8 * (num_syl / num_words)) - 15.59
-    result["fk_grade_level"] = fk_grade_level
-
-    if words[0] == 'dear':
-        result["starts_with_dear"] = 1
-    else:
-        result["starts_with_dear"] = 0
-
-    result["distinct_words"] = len(set(words))
-
-    #Part of Speech tagging
-    tagged_sentences = [nltk.pos_tag(sent) for sent in words_in_sentances]
-    pos_cnt = collections.Counter()
-    for word, pos in itertools.chain(*tagged_sentences):
-        pos_cnt[pos] += 1
-        pos_cnt_all[pos] += 1
-
-    #flag ending in a preposition
-    result["end_with_preposition"] = 0
-    for sent in tagged_sentences:
-        try:
-            if sent[-2][1] == "IN":
-                result["end_with_preposition"] += 1
-        except:
-            pass
-
-    result["num_nouns"] = sum(pos_cnt[key] for key in ("NN", "NNP", "NNS"))
-    result["num_verbs"] = sum(pos_cnt[key] for key in ("VB", "VBD", "VBG", "VBN", "VBP", "VBZ"))
-    result["num_adjectives"] = sum(pos_cnt[key] for key in ("JJ", "JJR", "JJS"))
-    result["num_adverbs"] = sum(pos_cnt[key] for key in ("RB", "RBR", "RBS"))
-    result["num_conjunctions"] = sum(pos_cnt[key] for key in ("CC", ))
-    result["num_prepositions"] = sum(pos_cnt[key] for key in ("IN", ))
-    result["num_superlatives"] = sum(pos_cnt[key] for key in ("JJS", "RBS"))
-    result["num_foreign"] = sum(pos_cnt[key] for key in ("FW", ))
-
-    result["has_semicolon"] = 1 if ";" in text else 0
-    result["has_questionmark"] = 1 if "?" in text else 0
-    result["has_exclamation"] = 1 if "!" in text else 0
-
     #frequencies of NER
     for ner in NERs:
         matches = re.findall(r"@%s\d+\b" % ner.upper(), text_asis)
         result["ner_%s" % ner] = len(matches)
-
-    
-
-
 
     #TODO:
     #flag for foreign words
@@ -221,7 +137,7 @@ def main():
     input = csv.reader(open(inputFilename, "rU"), delimiter="\t")
     header = input.next()
 
-    outputFilename = os.path.splitext(os.path.basename(inputFilename))[0] + "_tagged.csv"
+    outputFilename = os.path.splitext(os.path.basename(inputFilename))[0] + "_ner.csv"
     outfile = open(outputFilename, "w")
     output = csv.DictWriter(outfile, keys)
     output.writerow(dict(zip(keys, keys)))
