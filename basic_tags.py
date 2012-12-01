@@ -47,9 +47,9 @@ keys = ["id", "set", "essay", "rate1", "rate2", "grade",
     "num_chars", "num_sents", "num_words", "num_syl", "sentance_length", "num_correctly_spelled", "fk_grade_level",
     "starts_with_dear", "distinct_words", "end_with_preposition",
     "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_superlatives",
-    "proper_quote_punc", "has_semicolon", "has_questionmark", "has_exclamation", "num_quotes"]
+    "has_comma", "has_semicolon", "has_questionmark", "has_exclamation", "num_quotes", "proper_quote_punc"]
 keys.extend("ner_%s" % x for x in NERs)
-keys.extend(sorted(pos_dict.keys()))
+keys.extend("pos_%s" % x for x in sorted(pos_dict.keys()))
 
 def processRow(row):
     result = dict(zip(
@@ -109,12 +109,12 @@ def processRow(row):
 
     #Part of Speech tagging
     tagged_sentences = [nltk.pos_tag(sent) for sent in words_in_sentances]
-    pos_cnt = collections.Counter()
+
+    for pos in pos_dict.keys()
+        result["pos_%s" % pos] = 0
     for word, pos in itertools.chain(*tagged_sentences):
-        try:
-            results["pos_%s" % pos] += 1
-        except KeyError:
-            results["pos_%s" % pos] = 1
+        if pos in pos_dict.keys():
+            result["pos_%s" % pos] += 1
         pos_cnt_all[pos] += 1
 
     #flag ending in a preposition
@@ -126,18 +126,20 @@ def processRow(row):
         except:
             pass
 
-    result["num_nouns"] = sum(pos_cnt[key] for key in ("NN", "NNP", "NNS"))
-    result["num_verbs"] = sum(pos_cnt[key] for key in ("VB", "VBD", "VBG", "VBN", "VBP", "VBZ"))
-    result["num_adjectives"] = sum(pos_cnt[key] for key in ("JJ", "JJR", "JJS"))
-    result["num_adverbs"] = sum(pos_cnt[key] for key in ("RB", "RBR", "RBS"))
-    result["num_superlatives"] = sum(pos_cnt[key] for key in ("JJS", "RBS"))
+    #these lines are too clever
+    #try to sum up the counts in the result table for each of these parts of speech to get combos
+    result["num_nouns"] = sum(result.get("pos_%s" % key, 0) for key in ("NN", "NNP", "NNS"))
+    result["num_verbs"] = sum(result.get("pos_%s" % key, 0) for key in ("VB", "VBD", "VBG", "VBN", "VBP", "VBZ"))
+    result["num_adjectives"] = sum(result.get("pos_%s" % key, 0) for key in ("JJ", "JJR", "JJS"))
+    result["num_adverbs"] = sum(result.get("pos_%s" % key, 0) for key in ("RB", "RBR", "RBS"))
+    result["num_superlatives"] = sum(result.get("pos_%s" % key, 0) for key in ("JJS", "RBS"))
 
 
     n_proper_quotes = len(proper_quote_re.findall(text_asis))
     n_bad_quotes = len(bad_quote_re.findall(text_asis))
     if n_proper_quotes > n_bad_quotes:
         result["proper_quote_punc"] = 1
-    else if n_proper_quotes < n_bad_quotes:
+    elif n_proper_quotes < n_bad_quotes:
         result["proper_quote_punc"] = -1
     else:
         result["proper_quote_punc"] = 0
@@ -145,7 +147,7 @@ def processRow(row):
     result["has_semicolon"] = 1 if ";" in text else 0
     result["has_questionmark"] = 1 if "?" in text else 0
     result["has_exclamation"] = 1 if "!" in text else 0
-    result["num_quotes"] = len(char for char in text_asis if char in u'"\u201c\u201d')
+    result["num_quotes"] = len([char for char in text_asis if char in u'"\u201c\u201d'])
 
     #frequencies of NER
     for ner in NERs:

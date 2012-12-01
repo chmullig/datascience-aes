@@ -32,7 +32,7 @@ testpcadf = pandas.DataFrame(testpca, columns=columns)
 traindf = traindf.combine_first(trainpcadf)
 testdf = testdf.combine_first(testpcadf)
 
-nf = lambda x: os.path.splitext(os.path.basename(x))[0] + "_tfidf%s.csv" % ncomponents
+nf = lambda x: os.path.splitext(os.path.basename(x))[0] + "_tfidf.csv"
 traindf.to_csv(nf(trainfile))
 testdf.to_csv(nf(testfile))
 
