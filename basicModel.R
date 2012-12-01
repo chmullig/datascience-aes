@@ -9,8 +9,6 @@ training_ner$essay <- NULL
 training <- merge(training, training_ner, by=c("id", "set", "rate1", "rate2", "grade"))
 nrow(training)
 
-essays <- training$essay
-training$essay = 0
 training$spell_mistakes <- training$num_words - training$num_correctly_spelled
 training$avg_length <- training$num_chars / training$num_words
 training$avg_syls <- training$num_syl / training$num_words
@@ -63,6 +61,7 @@ for (i in 1:max(training$set)) {
     training$rfscorehat[training$set==i] <- predict(rfms[[i]], training[training$set==i,])
 }
 training$rfprediction <- round(training$rfscorehat)
+training$rfresidual <- training$grade - training$rfprediction
 
 kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$rfprediction))
 kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$rfprediction[X$holdout==1]))
@@ -94,6 +93,7 @@ training[training$holdout==1 && training$grade != training$rfprediction,]
 table(training$grade)
 
 
+
 ##gbm
 print("GBM!")
 library(gbm)
@@ -105,17 +105,22 @@ for (i in 1:max(training$set)) {
 #                +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
 #                +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
 #                ,
-#              data=training[training$set==i,], distribution="gaussian", n.trees=25000, cv.folds=5)
-    best.iter[[i]] <- gbm.perf(gbms[[i]], method="cv")
-    print(best.iter[[i]])
+#              data=training[training$set==i,], distribution="gaussian", n.trees=25000, cv.folds=10)
+#    gbms[[i]] <- gbm.more(gbms[[i]], 5000)
+#    best.iter[[i]] <- gbm.perf(gbms[[i]], method="cv")
+#    print(best.iter[[i]])
     training$gbmscore[training$set==i] <- predict.gbm(gbms[[i]], training[training$set==i,], best.iter[[i]])
 }
 training$gbmprediction <- round(training$gbmscore)
+training$gbmresidual <- training$grade - training$gbmprediction
+
 kappasgbm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$gbmprediction))
-kappasgbm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$gbmprediction[X$holdout==1]))
+#kappasgbm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$gbmprediction[X$holdout==1]))
 print(round(unlist(kappasgbm), 4))
 print(MeanQuadraticWeightedKappa(kappasgbm))
 
+
+ggplot(training, aes(x=grade), facets=set~., binwidth=1) + geom_histogram(
 
 
 gbm_alt <- gbm(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)  + has_semicolon + has_exclamation + has_questionmark + num_foreign
@@ -134,6 +139,9 @@ print(round(unlist(kappasgbma), 4))
 print(MeanQuadraticWeightedKappa(kappasgbma))
 
 
+
+
+
 ##SCORE
 testing <- read.csv("test_tagged_tfidf.csv")
 testing_ner <- read.csv("test_ner.csv")
@@ -148,8 +156,8 @@ testing$avg_syls <- testing$num_syl / testing$num_words
 testing$spell_pct <- testing$num_correctly_spelled / testing$num_words
 
 for (i in 1:max(testing$set)) {
-    testing$scorehat[testing$set==i] <- predict(models[[i]], testing[testing$set==i,])
-    testing$rfscorehat[testing$set==i] <- predict(rfms[[i]], testing[testing$set==i,])
+    #testing$scorehat[testing$set==i] <- predict(models[[i]], testing[testing$set==i,])
+    #testing$rfscorehat[testing$set==i] <- predict(rfms[[i]], testing[testing$set==i,])
     testing$gbmscorehat[testing$set==i] <-predict.gbm(gbms[[i]], testing[testing$set==i,], best.iter.i)
 }
 testing$scorehat[is.na(testing$scorehat)] = 1
@@ -162,7 +170,7 @@ testing$gbmprediction <- round(testing$gbmscore)
 testing$rfascorehat <- predict(rf_alt, testing)
 testing$rfaprediction <- as.numeric(levels(testing$rfascorehat))[testing$rfascorehat]
 testing$gbmascore <- predict.gbm(gbm_alt, testing, best.iter.gbm_alt)
-testing$gbmaprediction <- round(testing$gbmascore)
+testing$gbmaprediction <- as.numeric(levels(testing$gbmascore))[testing$gbmascore]
 
 testing$weight = 1
 write.csv(testing[, c("id", "set", "weight", "prediction")], "testing_predicted_lm.csv", row.names=FALSE, na="")

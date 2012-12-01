@@ -28,6 +28,9 @@ PUNCTUATION = set(('.', ',', '"', "'", '`', ':', ';', '!', '~', '-', '=', '+', '
     '\xe2', '\x80', '\x98', '\xe2', '\x80', '\x99', '\xe2', '\x80', '\x9c', '\xe2', '\x80', '\x9d'
     ))
 
+proper_quote_re = re.compile(ur'''[\.,\?\!]["\u201c\u201d]''')
+bad_quote_re = re.compile(ur'''["\u201c\u201d][\.,\?\!]''')
+
 CONTRACTIONS = set(("'s", "wo", "n't", "'re", "'m", "'ve", "'ll", "isn"))
 websites = ("myspace", "facebook", "youtube", "e-mail", "google", "hand-eye", "eye-hand", "webcam", "microsoft", "caps1", "yahoo", "wikipedia")
 SPECIAL_WORDS = set(("e-mail", "hand-eye", "eye-hand", "webcam", "webcams", "skype", "powerpoint", "english", "america", "american", "netbook"))
@@ -38,13 +41,15 @@ SPECIAL_WORDS.update("www." + x + ".com" for x in websites)
 NER_re = re.compile(r"""(?:organization|caps|date|percent|person|money|location|num|month|time)\d+$""")
 NERs = ["person", "organization", "location", "date", "time", "money", "percent", "caps", "num", "month"]
 
+
+
 keys = ["id", "set", "essay", "rate1", "rate2", "grade",
     "num_chars", "num_sents", "num_words", "num_syl", "sentance_length", "num_correctly_spelled", "fk_grade_level",
     "starts_with_dear", "distinct_words", "end_with_preposition",
-    "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_conjunctions",
-    "num_prepositions", "num_superlatives", "num_foreign",
-    "has_semicolon", "has_questionmark", "has_exclamation",]
+    "num_nouns", "num_verbs", "num_adjectives", "num_adverbs", "num_superlatives",
+    "proper_quote_punc", "has_semicolon", "has_questionmark", "has_exclamation", "num_quotes"]
 keys.extend("ner_%s" % x for x in NERs)
+keys.extend(sorted(pos_dict.keys()))
 
 def processRow(row):
     result = dict(zip(
@@ -53,8 +58,8 @@ def processRow(row):
     sys.stdout.write("\r %s#%s" % (row[1], row[0]))
     sys.stdout.flush()
 
-    text_asis = row[2].decode('cp1252', 'ignore')
-    text = row[2].strip().decode('cp1252', 'ignore').lower()
+    text_asis = row[2].decode('mac-roman')
+    text = row[2].strip().decode('mac-roman').lower()
 
     result["num_chars"] = len(text)
 
@@ -106,7 +111,10 @@ def processRow(row):
     tagged_sentences = [nltk.pos_tag(sent) for sent in words_in_sentances]
     pos_cnt = collections.Counter()
     for word, pos in itertools.chain(*tagged_sentences):
-        pos_cnt[pos] += 1
+        try:
+            results["pos_%s" % pos] += 1
+        except KeyError:
+            results["pos_%s" % pos] = 1
         pos_cnt_all[pos] += 1
 
     #flag ending in a preposition
@@ -122,30 +130,32 @@ def processRow(row):
     result["num_verbs"] = sum(pos_cnt[key] for key in ("VB", "VBD", "VBG", "VBN", "VBP", "VBZ"))
     result["num_adjectives"] = sum(pos_cnt[key] for key in ("JJ", "JJR", "JJS"))
     result["num_adverbs"] = sum(pos_cnt[key] for key in ("RB", "RBR", "RBS"))
-    result["num_conjunctions"] = sum(pos_cnt[key] for key in ("CC", ))
-    result["num_prepositions"] = sum(pos_cnt[key] for key in ("IN", ))
     result["num_superlatives"] = sum(pos_cnt[key] for key in ("JJS", "RBS"))
-    result["num_foreign"] = sum(pos_cnt[key] for key in ("FW", ))
 
+
+    n_proper_quotes = len(proper_quote_re.findall(text_asis))
+    n_bad_quotes = len(bad_quote_re.findall(text_asis))
+    if n_proper_quotes > n_bad_quotes:
+        result["proper_quote_punc"] = 1
+    else if n_proper_quotes < n_bad_quotes:
+        result["proper_quote_punc"] = -1
+    else:
+        result["proper_quote_punc"] = 0
+    result["has_comma"] = 1 if "," in text else 0
     result["has_semicolon"] = 1 if ";" in text else 0
     result["has_questionmark"] = 1 if "?" in text else 0
     result["has_exclamation"] = 1 if "!" in text else 0
+    result["num_quotes"] = len(char for char in text_asis if char in u'"\u201c\u201d')
 
     #frequencies of NER
     for ner in NERs:
         matches = re.findall(r"@%s\d+\b" % ner.upper(), text_asis)
         result["ner_%s" % ner] = len(matches)
 
-    
-
-
 
     #TODO:
     #flag for foreign words
-    #flag coordinating conjunctions
-    #flag prepositions
-    #flag adverbs/adjectives and superlatives
-    #number of 
+    #number of
 
     # print text
     # print sents
@@ -154,6 +164,8 @@ def processRow(row):
     # print tagged_sentences
 
     return result
+
+
 
 class Worker(multiprocessing.Process):
     """
@@ -172,6 +184,7 @@ class Worker(multiprocessing.Process):
             row = self.input_queue.get()
             if row is None:
                 self.result_queue.put(None)
+                print pos_cnt_all
                 break
             else:
                 result = processRow(row)

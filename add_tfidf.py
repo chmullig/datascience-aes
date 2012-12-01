@@ -15,8 +15,8 @@ traindf = pandas.read_csv(trainfile)
 testdf = pandas.read_csv(testfile)
 columns=["tfidfpca_%s" % x for x in xrange(ncomponents)]
 
-trainCleanEssay = traindf.essay.str.decode('cp1252', 'ignore')
-testCleanEssay = testdf.essay.str.decode('cp1252', 'ignore')
+trainCleanEssay = traindf.essay.str.decode('mac-roman')
+testCleanEssay = testdf.essay.str.decode('mac-roman')
 
 vectorizer = TfidfVectorizer(ngram_range=(1,2), stop_words="english")
 trainvec = vectorizer.fit_transform(trainCleanEssay)
@@ -32,7 +32,7 @@ testpcadf = pandas.DataFrame(testpca, columns=columns)
 traindf = traindf.combine_first(trainpcadf)
 testdf = testdf.combine_first(testpcadf)
 
-nf = lambda x: os.path.splitext(os.path.basename(x))[0] + "_tfidf.csv"
+nf = lambda x: os.path.splitext(os.path.basename(x))[0] + "_tfidf%s.csv" % ncomponents
 traindf.to_csv(nf(trainfile))
 testdf.to_csv(nf(testfile))
 
