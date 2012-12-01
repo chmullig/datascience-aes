@@ -88,9 +88,9 @@ for (TeamName in unique(scores$TeamName)) {
     displayName <- TeamName
     #Trim the TeamName name if it's too long to be shown
     if (nchar(as.character(displayName)) > MAXLEN) {
-        displayName <- paste(substring(displayName, 0, MAXLEN-3), "...", sep="")
+        displayName <- paste(substring(displayName, 0, MAXLEN-4), "...", sep="")
     }
-    mtext(side=4, at=bests$x[bests$TeamName==TeamName], text=paste(displayName, round(currScore, 2)), col=color, line=0.5, las=2, cex=TEXTSIZE)
+    mtext(side=4, at=bests$x[bests$TeamName==TeamName], text=paste(displayName, round(currScore, 3)), col=color, line=0.5, las=2, cex=TEXTSIZE)
     print(paste(TeamName, color))
 }
 dev.off()
