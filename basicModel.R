@@ -186,11 +186,50 @@ testing$spell_mistakes <- testing$num_words - testing$num_correctly_spelled
 testing$avg_length <- testing$num_chars / testing$num_words
 testing$avg_syls <- testing$num_syl / testing$num_words
 testing$spell_pct <- testing$num_correctly_spelled / testing$num_words
+testing$has_a_quote <- as.numeric(testing$num_quotes >= 2)
+
+
+#section just temp for this data run
+testing$pos_WRB[is.na(testing$pos_WRB)] <- 0
+testing$pos_PRP.[is.na(testing$pos_PRP.)] <- 0
+testing$pos_VBG[is.na(testing$pos_VBG)] <- 0
+testing$pos_FW[is.na(testing$pos_FW)] <- 0
+testing$pos_CC[is.na(testing$pos_CC)] <- 0
+testing$pos_PDT[is.na(testing$pos_PDT)] <- 0
+testing$pos_RBS[is.na(testing$pos_RBS)] <- 0
+testing$pos_PRP[is.na(testing$pos_PRP)] <- 0
+testing$pos_CD[is.na(testing$pos_CD)] <- 0
+testing$`pos_WP.`[is.na(testing$pos_WP.)] <- 0
+testing$pos_VBP[is.na(testing$pos_VBP)] <- 0
+testing$pos_VBN[is.na(testing$pos_VBN)] <- 0
+testing$pos_EX[is.na(testing$pos_EX)] <- 0
+testing$pos_JJ[is.na(testing$pos_JJ)] <- 0
+testing$pos_IN[is.na(testing$pos_IN)] <- 0
+testing$pos_WP[is.na(testing$pos_WP)] <- 0
+testing$pos_VBZ[is.na(testing$pos_VBZ)] <- 0
+testing$pos_DT[is.na(testing$pos_DT)] <- 0
+testing$pos_MD[is.na(testing$pos_MD)] <- 0
+testing$pos_NNPS[is.na(testing$pos_NNPS)] <- 0
+testing$pos_RP[is.na(testing$pos_RP)] <- 0
+testing$pos_NN[is.na(testing$pos_NN)] <- 0
+testing$pos_POS[is.na(testing$pos_POS)] <- 0
+testing$pos_RBR[is.na(testing$pos_RBR)] <- 0
+testing$pos_VBD[is.na(testing$pos_VBD)] <- 0
+testing$pos_JJS[is.na(testing$pos_JJS)] <- 0
+testing$pos_JJR[is.na(testing$pos_JJR)] <- 0
+testing$pos_VB[is.na(testing$pos_VB)] <- 0
+testing$pos_TO[is.na(testing$pos_TO)] <- 0
+testing$pos_UH[is.na(testing$pos_UH)] <- 0
+testing$pos_LS[is.na(testing$pos_LS)] <- 0
+testing$pos_RB[is.na(testing$pos_RB)] <- 0
+testing$pos_WDT[is.na(testing$pos_WDT)] <- 0
+testing$pos_NNS[is.na(testing$pos_NNS)] <- 0
+testing$pos_NNP[is.na(testing$pos_NNP)] <- 0
 
 for (i in 1:max(testing$set)) {
-    #testing$scorehat[testing$set==i] <- predict(models[[i]], testing[testing$set==i,])
-    #testing$rfscorehat[testing$set==i] <- predict(rfms[[i]], testing[testing$set==i,])
-    testing$gbmscorehat[testing$set==i] <-predict.gbm(gbms[[i]], testing[testing$set==i,], best.iter.i)
+    testing$scorehat[testing$set==i] <- predict(models[[i]], testing[testing$set==i,])
+    testing$rfscorehat[testing$set==i] <- predict(rfms[[i]], testing[testing$set==i,])
+    testing$gbmscorehat[testing$set==i] <-predict.gbm(gbms[[i]], testing[testing$set==i,], best.iter[[i]])
 }
 testing$scorehat[is.na(testing$scorehat)] = 1
 testing$rfscorehat[is.na(testing$rfscorehat)] = 1
@@ -199,14 +238,14 @@ testing$prediction <- round(testing$scorehat)
 testing$rfprediction <- round(testing$rfscorehat)
 testing$gbmprediction <- round(testing$gbmscore)
 
-testing$rfascorehat <- predict(rf_alt, testing)
-testing$rfaprediction <- as.numeric(levels(testing$rfascorehat))[testing$rfascorehat]
-testing$gbmascore <- predict.gbm(gbm_alt, testing, best.iter.gbm_alt)
-testing$gbmaprediction <- as.numeric(levels(testing$gbmascore))[testing$gbmascore]
+# testing$rfascorehat <- predict(rf_alt, testing)
+# testing$rfaprediction <- as.numeric(levels(testing$rfascorehat))[testing$rfascorehat]
+# testing$gbmascore <- predict.gbm(gbm_alt, testing, best.iter.gbm_alt)
+# testing$gbmaprediction <- as.numeric(levels(testing$gbmascore))[testing$gbmascore]
 
 testing$weight = 1
 write.csv(testing[, c("id", "set", "weight", "prediction")], "testing_predicted_lm.csv", row.names=FALSE, na="")
 write.csv(testing[, c("id", "set", "weight", "rfprediction")], "testing_predicted_rf.csv", row.names=FALSE, na="")
-write.csv(testing[, c("id", "set", "weight", "rfaprediction")], "testing_predicted_rfa.csv", row.names=FALSE, na="")
+#write.csv(testing[, c("id", "set", "weight", "rfaprediction")], "testing_predicted_rfa.csv", row.names=FALSE, na="")
 write.csv(testing[, c("id", "set", "weight", "gbmprediction")], "testing_predicted_gbm.csv", row.names=FALSE, na="")
-write.csv(testing[, c("id", "set", "weight", "gbmaprediction")], "testing_predicted_gbma.csv", row.names=FALSE, na="")
+#write.csv(testing[, c("id", "set", "weight", "gbmaprediction")], "testing_predicted_gbma.csv", row.names=FALSE, na="")
