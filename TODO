@@ -1,0 +1,10 @@
+* Play with tf-idf stuff
+  * Stop words good or bad?
+  * do bi-grams help? trigrams?
+  * PCA -> is it necessary? Are there better sizes (eg, try 10, 20, 30, ... 100?)
+* Try to normalize the ner_XXX and pos_XXX vectors by num_words.
+* Try alternate functional forms, eg num_chars^2, log(num_chars), num_chars^(1/2)
+* Better spelling checker
+* Presence of Keywords in prompt (compare tf-idf of prompt X among prompts with tf-idf of that essay or something???0
+* Check for presence of verbs in all sentences?
+* try turning things into flags?

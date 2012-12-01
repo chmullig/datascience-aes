@@ -155,10 +155,6 @@ def processRow(row):
         result["ner_%s" % ner] = len(matches)
 
 
-    #TODO:
-    #flag for foreign words
-    #number of
-
     # print text
     # print sents
     # print words_in_sentances
