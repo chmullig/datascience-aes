@@ -38,6 +38,13 @@ Implements a few models using R and python. Requirements:
 * counts of the NER words (eg number of times they used @MONEY)
 * TF-IDF word and bigram frequencies that were then PCA'd down to 50 cells.
 
+#Models Used
+* First model was OLS linear regression using a subset of the variables. I trained 5 models, one per essay set, with identical formulas. Shockingly good.
+* Second model was Random Forest regression, again 5 models. Using more variables.
+* Third model was GBM, same formula as random forest, using 5 models.
+
+Also tried doing rfm and gbm with one model using set as a predictor, but it didn't seem to perform as well.
+
 #Basic workflow in buildModel.sh.
 
 1. Run basic_tags.py on test.tsv and train.tsv. This creates almost all the
