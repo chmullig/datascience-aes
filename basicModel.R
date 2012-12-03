@@ -3,6 +3,12 @@ require(plyr)
 require(MASS)
 require(ggplot2)
 
+library(doMC)
+library(foreach)
+library(caret)
+registerDoMC()
+
+
 training <- read.csv("train_tagged_tfidf.csv")
 nrow(training)
 
@@ -51,6 +57,58 @@ training$pos_NNS[is.na(training$pos_NNS)] <- 0
 training$pos_NNP[is.na(training$pos_NNP)] <- 0
 
 
+training$ner_caps_pct = training$ner_caps / training$num_words
+training$ner_date_pct = training$ner_date / training$num_words
+training$ner_location_pct = training$ner_location / training$num_words
+training$ner_money_pct = training$ner_money / training$num_words
+training$ner_month_pct = training$ner_month / training$num_words
+training$ner_num_pct = training$ner_num / training$num_words
+training$ner_organization_pct = training$ner_organization / training$num_words
+training$ner_percent_pct = training$ner_percent / training$num_words
+training$ner_person_pct = training$ner_person / training$num_words
+training$ner_time_pct = training$ner_time / training$num_words
+
+training$num_adjectives_pct = training$num_adjectives / training$num_words
+training$num_adverbs_pct = training$num_adverbs / training$num_words
+training$num_nouns_pct = training$num_nouns / training$num_words
+training$num_quotes_pct = training$num_quotes / training$num_words
+training$num_superlatives_pct = training$num_superlatives / training$num_words
+training$num_syl_pct = training$num_syl / training$num_words
+training$num_verbs_pct = training$num_verbs / training$num_words
+
+training$pos_CC_pct = training$pos_CC / training$num_words
+training$pos_CD_pct = training$pos_CD / training$num_words
+training$pos_DT_pct = training$pos_DT / training$num_words
+training$pos_EX_pct = training$pos_EX / training$num_words
+training$pos_FW_pct = training$pos_FW / training$num_words
+training$pos_IN_pct = training$pos_IN / training$num_words
+training$pos_JJ_pct = training$pos_JJ / training$num_words
+training$pos_JJR_pct = training$pos_JJR / training$num_words
+training$pos_JJS_pct = training$pos_JJS / training$num_words
+training$pos_LS_pct = training$pos_LS / training$num_words
+training$pos_MD_pct = training$pos_MD / training$num_words
+training$pos_NN_pct = training$pos_NN / training$num_words
+training$pos_NNP_pct = training$pos_NNP / training$num_words
+training$pos_NNPS_pct = training$pos_NNPS / training$num_words
+training$pos_NNS_pct = training$pos_NNS / training$num_words
+training$pos_PDT_pct = training$pos_PDT / training$num_words
+training$pos_POS_pct = training$pos_POS / training$num_words
+training$pos_PRP_pct = training$pos_PRP / training$num_words
+training$pos_RB_pct = training$pos_RB / training$num_words
+training$pos_RBR_pct = training$pos_RBR / training$num_words
+training$pos_RBS_pct = training$pos_RBS / training$num_words
+training$pos_RP_pct = training$pos_RP / training$num_words
+training$pos_TO_pct = training$pos_TO / training$num_words
+training$pos_UH_pct = training$pos_UH / training$num_words
+training$pos_VB_pct = training$pos_VB / training$num_words
+training$pos_VBD_pct = training$pos_VBD / training$num_words
+training$pos_VBG_pct = training$pos_VBG / training$num_words
+training$pos_VBN_pct = training$pos_VBN / training$num_words
+training$pos_VBP_pct = training$pos_VBP / training$num_words
+training$pos_VBZ_pct = training$pos_VBZ / training$num_words
+training$pos_WDT_pct = training$pos_WDT / training$num_words
+training$pos_WP_pct = training$pos_WP / training$num_words
+training$pos_WRB_pct = training$pos_WRB / training$num_words
 
 training$holdout <- 0
 training$holdout[sample(nrow(training), as.integer(nrow(training)*.1))] <- 1
@@ -60,7 +118,7 @@ qplot(grade, data=training, facets=set~., binwidth=1)
 
 #Run Linear Model
 models <- dlply(training[training$holdout==0,], .(set), lm,
-                formula = grade ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes + sentance_length + num_superlatives + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs) + has_semicolon + has_exclamation + has_questionmark + num_quotes + proper_quote_punc + has_a_quote + num_CC
+                formula = grade ~ num_chars + log(num_chars) + avg_length + avg_syls  + spell_pct + starts_with_dear + spell_mistakes + sentance_length + num_superlatives + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs) + has_semicolon + has_exclamation + has_questionmark + num_quotes + proper_quote_punc + has_a_quote + pos_CC
                 +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
                 )
 lapply(models, summary)
@@ -93,8 +151,12 @@ for (i in 1:max(training$set)) {
         +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
         +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
         +pos_CC+pos_CD+pos_DT+pos_EX+pos_IN+pos_JJ+pos_JJR+pos_JJS+pos_MD+pos_NN+pos_NNP+pos_NNS+pos_PDT+pos_POS+pos_PRP+`pos_PRP.`+pos_RB+pos_RBR+pos_RBS+pos_RP+pos_TO+pos_VB+pos_VBD+pos_VBG+pos_VBN+pos_VBP+pos_VBZ+pos_WDT+pos_WP+pos_WRB
-        ,
-        data=training[training$set == i & training$holdout==0,], importance=TRUE, ntree=2000)
+          
+          #+ ner_caps_pct+ ner_date_pct+ ner_location_pct+ ner_money_pct+ ner_month_pct+ ner_num_pct+ ner_organization_pct+ ner_percent_pct+ ner_person_pct+ ner_time_pct
+          #+ num_adjectives_pct+ num_adverbs_pct+ num_nouns_pct+ num_quotes_pct+ num_superlatives_pct+ num_syl_pct+ num_verbs_pct
+          #+ pos_CC_pct+ pos_CD_pct+ pos_DT_pct+ pos_EX_pct+ pos_FW_pct+ pos_IN_pct+ pos_JJ_pct+ pos_JJR_pct+ pos_JJS_pct+ pos_LS_pct+ pos_MD_pct+ pos_NN_pct+ pos_NNP_pct+ pos_NNPS_pct+ pos_NNS_pct+ pos_PDT_pct+ pos_POS_pct+ pos_PRP_pct+ pos_RB_pct+ pos_RBR_pct+ pos_RBS_pct+ pos_RP_pct+ pos_TO_pct+ pos_UH_pct+ pos_VB_pct+ pos_VBD_pct+ pos_VBG_pct+ pos_VBN_pct+ pos_VBP_pct+ pos_VBZ_pct+ pos_WDT_pct+ pos_WP_pct+ pos_WRB_pct
+    ,
+        data=training[training$set == i & training$holdout==0,], importance=TRUE, ntree=5000)
     training$rfscorehat[training$set==i] <- predict(rfms[[i]], training[training$set==i,])
 }
 training$rfprediction <- round(training$rfscorehat)
@@ -143,7 +205,8 @@ for (i in 1:max(training$set)) {
                     +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
                     +pos_CC+pos_CD+pos_DT+pos_EX+pos_IN+pos_JJ+pos_JJR+pos_JJS+pos_MD+pos_NN+pos_NNP+pos_NNS+pos_PDT+pos_POS+pos_PRP+`pos_PRP.`+pos_RB+pos_RBR+pos_RBS+pos_RP+pos_TO+pos_VB+pos_VBD+pos_VBG+pos_VBN+pos_VBP+pos_VBZ+pos_WDT+pos_WP+pos_WRB
                 ,
-             data=training[training$set==i,], distribution="gaussian", n.trees=50000, cv.folds=10)
+            data=training[training$set==i,], distribution="gaussian", verbose=FALSE,
+            n.trees=50000, cv.folds=8, interaction.depth=3)
    best.iter[[i]] <- gbm.perf(gbms[[i]], method="cv")
    print(best.iter[[i]])
     training$gbmscore[training$set==i] <- predict.gbm(gbms[[i]], training[training$set==i,], best.iter[[i]])

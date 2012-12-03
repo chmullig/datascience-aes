@@ -4,8 +4,10 @@
   * PCA -> is it necessary? Are there better sizes (eg, try 10, 20, 30, ... 100?)
 * Try to normalize the ner_XXX and pos_XXX vectors by num_words.
 * Try alternate functional forms, eg num_chars^2, log(num_chars), num_chars^(1/2)
-* Better spelling checker
-* Presence of Keywords in prompt (compare tf-idf of prompt X among prompts with tf-idf of that essay or something???0
+* Better spell checker
+* Presence of Keywords in prompt (compare tf-idf of prompt X among prompts with tf-idf of that essay or something???)
 * Check for presence of verbs in all sentences?
 * try turning things into flags?
 * Try doing RFM classification. Several people have found it works better, based on online comments...
+* Try GBM classification
+* Use caret to select features, tune parameters, including shrinkage, n.minobsinnode, interaction depth
