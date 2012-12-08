@@ -31,6 +31,7 @@ def download_leaderboard():
 def makegraph():
     print '   -> creating graph with R'
     r = call(["Rscript", "makegraph.R"])
+    r = call(["Rscript", "makegraph_closeup.R"])
     resize = call(["sips", "--out", "datascience_leaderboard-150x150.png", "-Z", "150", "datascience_leaderboard.png"])
     resize = call(["sips", "--out", "datascience_leaderboard-640x640.png", "-Z", "640", "datascience_leaderboard.png"])
     print '   -> Graph ready'
@@ -40,6 +41,7 @@ def uploadgraph():
     scp = call(['scp', 'datascience_leaderboard.png',
                         'datascience_leaderboard-150x150.png',
                         'datascience_leaderboard-640x640.png',
+                        'datascience_leaderboard_closeup.png',
                         'chmullig.com:webapps/chmullig/wp-content/uploads/2012/11/'])
 
 
