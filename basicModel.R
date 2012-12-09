@@ -8,6 +8,9 @@ library(foreach)
 library(caret)
 registerDoMC()
 
+options(scipen=5)
+
+
 
 training <- read.csv("train_tagged_tfidf.csv")
 nrow(training)
@@ -17,6 +20,11 @@ training$avg_length <- training$num_chars / training$num_words
 training$avg_syls <- training$num_syl / training$num_words
 training$spell_pct <- training$num_correctly_spelled / training$num_words
 training$has_a_quote <- as.numeric(training$num_quotes >= 2)
+training$rel_distinct <- training$distinct_words / training$num_words
+training$nouns_to_adjs <- training$num_nouns/training$num_adjectives
+training$nouns_to_verbs <- training$num_nouns/training$num_verbs
+training$nums_to_adverbs <- training$num_nouns/training$num_adverbs
+
 
 
 #section just temp for this data run
@@ -147,22 +155,19 @@ require(randomForest)
 rfms = list()
 for (i in 1:max(training$set)) {
     print(paste(c("RFM: set", i)))
-    rfms[[i]] <- randomForest(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)  + has_semicolon + has_exclamation + has_questionmark + has_questionmark + num_quotes + proper_quote_punc + has_a_quote
-        +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
-        +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
-        +pos_CC+pos_CD+pos_DT+pos_EX+pos_IN+pos_JJ+pos_JJR+pos_JJS+pos_MD+pos_NN+pos_NNP+pos_NNS+pos_PDT+pos_POS+pos_PRP+`pos_PRP.`+pos_RB+pos_RBR+pos_RBS+pos_RP+pos_TO+pos_VB+pos_VBD+pos_VBG+pos_VBN+pos_VBP+pos_VBZ+pos_WDT+pos_WP+pos_WRB
-          
-          #+ ner_caps_pct+ ner_date_pct+ ner_location_pct+ ner_money_pct+ ner_month_pct+ ner_num_pct+ ner_organization_pct+ ner_percent_pct+ ner_person_pct+ ner_time_pct
-          #+ num_adjectives_pct+ num_adverbs_pct+ num_nouns_pct+ num_quotes_pct+ num_superlatives_pct+ num_syl_pct+ num_verbs_pct
-          #+ pos_CC_pct+ pos_CD_pct+ pos_DT_pct+ pos_EX_pct+ pos_FW_pct+ pos_IN_pct+ pos_JJ_pct+ pos_JJR_pct+ pos_JJS_pct+ pos_LS_pct+ pos_MD_pct+ pos_NN_pct+ pos_NNP_pct+ pos_NNPS_pct+ pos_NNS_pct+ pos_PDT_pct+ pos_POS_pct+ pos_PRP_pct+ pos_RB_pct+ pos_RBR_pct+ pos_RBS_pct+ pos_RP_pct+ pos_TO_pct+ pos_UH_pct+ pos_VB_pct+ pos_VBD_pct+ pos_VBG_pct+ pos_VBN_pct+ pos_VBP_pct+ pos_VBZ_pct+ pos_WDT_pct+ pos_WP_pct+ pos_WRB_pct
+    rfms[[i]] <- randomForest(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_superlatives + avg_length + spell_pct + rel_distinct + has_semicolon + has_exclamation + has_questionmark + has_questionmark + num_quotes + proper_quote_punc
+                              +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
+                              +pos_CC+pos_CD+pos_DT+pos_EX+pos_IN+pos_JJ+pos_JJR+pos_JJS+pos_MD+pos_NN+pos_NNP+pos_NNS+pos_PDT+pos_POS+pos_PRP+`pos_PRP.`+pos_RB+pos_RBR+pos_RBS+pos_RP+pos_TO+pos_VB+pos_VBD+pos_VBG+pos_VBN+pos_VBP+pos_VBZ+pos_WDT+pos_WP+pos_WRB
     ,
-        data=training[training$set == i & training$holdout==0,], importance=TRUE, ntree=5000)
+        data=training[training$set == i & training$holdout==0,], importance=TRUE, ntree=2000)
     training$rfscorehat[training$set==i] <- predict(rfms[[i]], training[training$set==i,])
 }
 training$rfprediction <- round(training$rfscorehat)
 training$rfresidual <- training$grade - training$rfprediction
 
 kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$rfprediction))
+print(round(unlist(kappasrfm), 4))
+print(MeanQuadraticWeightedKappa(kappasrfm))
 kappasrfm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$rfprediction[X$holdout==1]))
 print(round(unlist(kappasrfm), 4))
 print(MeanQuadraticWeightedKappa(kappasrfm))
@@ -170,21 +175,6 @@ print(MeanQuadraticWeightedKappa(kappasrfm))
 qplot(training$grade, training$rfprediction, position=position_jitter(width=.2, height=.2))
 qplot(grade - rfprediction, facets=set~., data=training)
 
-
-#rf alt
-# rf_alt <- randomForest(as.factor(grade) ~ set + num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)  + has_semicolon + has_exclamation + has_questionmark + num_foreign
-#                        +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
-#                        +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
-#                        ,
-#                        data=training[training$holdout==0,], importance=TRUE, ntree=5000, nodesize=10, mtry=10)
-# training$rfascorehat <- predict(rf_alt, training)
-# training$rfaprediction <- as.numeric(levels(training$rfascorehat))[training$rfascorehat]
-# 
-# kappasrfa <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade, X$rfaprediction))
-# print(paste(c("RF Alt, Kappas, ALL:", round(unlist(kappasrfa), 4))))
-# kappasrfa <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$rfaprediction[X$holdout==1]))
-# print(paste(c("RF Alt, Kappas, Holdout:", round(unlist(kappasrfa), 4))))
-# print(paste(c("RF Alt, MQWK:", MeanQuadraticWeightedKappa(kappasrfa))))
 
 
 training[training$holdout==1 && training$grade != training$rfprediction,]
@@ -200,13 +190,12 @@ gbms = list()
 best.iter = list()
 for (i in 1:max(training$set)) {
     print(paste(c("GBM: set", i)))
-   gbms[[i]] <- gbm(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)  + has_semicolon + has_exclamation + has_questionmark + has_questionmark + num_quotes + proper_quote_punc + has_a_quote
+   gbms[[i]] <- gbm(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_superlatives + avg_length + spell_pct + rel_distinct + nouns_to_adjs + nouns_to_verbs + nums_to_adverbs + has_semicolon + has_exclamation + has_questionmark + has_questionmark + num_quotes + proper_quote_punc
                     +tfidfpca_0+tfidfpca_1+tfidfpca_2+tfidfpca_3+tfidfpca_4+tfidfpca_5+tfidfpca_6+tfidfpca_7+tfidfpca_8+tfidfpca_9+tfidfpca_10+tfidfpca_11+tfidfpca_12+tfidfpca_13+tfidfpca_14+tfidfpca_15+tfidfpca_16+tfidfpca_17+tfidfpca_18+tfidfpca_19+tfidfpca_20+tfidfpca_21+tfidfpca_22+tfidfpca_23+tfidfpca_24+tfidfpca_25+tfidfpca_26+tfidfpca_27+tfidfpca_28+tfidfpca_29+tfidfpca_30+tfidfpca_31+tfidfpca_32+tfidfpca_33+tfidfpca_34+tfidfpca_35+tfidfpca_36+tfidfpca_37+tfidfpca_38+tfidfpca_39+tfidfpca_40+tfidfpca_41+tfidfpca_42+tfidfpca_43+tfidfpca_44+tfidfpca_45+tfidfpca_46+tfidfpca_47+tfidfpca_48+tfidfpca_49
-                    +ner_person+ner_organization+ner_location+ner_date+ner_time+ner_money+ner_percent+ner_caps+ner_num+ner_month
                     +pos_CC+pos_CD+pos_DT+pos_EX+pos_IN+pos_JJ+pos_JJR+pos_JJS+pos_MD+pos_NN+pos_NNP+pos_NNS+pos_PDT+pos_POS+pos_PRP+`pos_PRP.`+pos_RB+pos_RBR+pos_RBS+pos_RP+pos_TO+pos_VB+pos_VBD+pos_VBG+pos_VBN+pos_VBP+pos_VBZ+pos_WDT+pos_WP+pos_WRB
                 ,
             data=training[training$set==i,], distribution="gaussian", verbose=FALSE,
-            n.trees=50000, cv.folds=8, interaction.depth=3)
+            n.trees=50000, cv.folds=8, interaction.depth=5, n.minobsinnode=15)
    best.iter[[i]] <- gbm.perf(gbms[[i]], method="cv")
    print(best.iter[[i]])
     training$gbmscore[training$set==i] <- predict.gbm(gbms[[i]], training[training$set==i,], best.iter[[i]])
@@ -218,6 +207,19 @@ kappasgbm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$g
 #kappasgbm <- dlply(training, .(set), function(X) ScoreQuadraticWeightedKappa(X$grade[X$holdout==1], X$gbmprediction[X$holdout==1]))
 print(round(unlist(kappasgbm), 4))
 print(MeanQuadraticWeightedKappa(kappasgbm))
+
+
+gbmsumsdf <- lapply(lapply(gbms, summary), as.data.frame)
+gbmsumsdf[[1]] <- rename(gbmsumsdf[[1]], c(rel.inf="rel.inf.1"))
+gbmsumsdf[[2]] <- rename(gbmsumsdf[[2]], c(rel.inf="rel.inf.2"))
+gbmsumsdf[[3]] <- rename(gbmsumsdf[[3]], c(rel.inf="rel.inf.3"))
+gbmsumsdf[[4]] <- rename(gbmsumsdf[[4]], c(rel.inf="rel.inf.4"))
+gbmsumsdf[[5]] <- rename(gbmsumsdf[[5]], c(rel.inf="rel.inf.5"))
+rel.inf <- merge_recurse(gbmsumsdf, by="var")
+rel.inf$avg <- rowMeans(rel.inf[,-1])
+print(rel.inf[order(-rel.inf$avg), ])
+
+
 
 # 
 # gbm_alt <- gbm(grade ~ num_chars + num_sents + num_words + num_syl + sentance_length + avg_syls + spell_mistakes + fk_grade_level + distinct_words + starts_with_dear + end_with_preposition + num_nouns + num_verbs + num_adjectives + num_adverbs + num_conjunctions + num_prepositions + num_superlatives + avg_length + spell_pct + (distinct_words / num_words) + (num_nouns/num_adjectives) + (num_nouns/num_verbs) + (num_nouns/num_adverbs)  + has_semicolon + has_exclamation + has_questionmark + num_foreign
@@ -250,6 +252,10 @@ testing$avg_length <- testing$num_chars / testing$num_words
 testing$avg_syls <- testing$num_syl / testing$num_words
 testing$spell_pct <- testing$num_correctly_spelled / testing$num_words
 testing$has_a_quote <- as.numeric(testing$num_quotes >= 2)
+testing$rel_distinct <- testing$distinct_words / testing$num_words
+testing$nouns_to_adjs <- testing$num_nouns/testing$num_adjectives
+testing$nouns_to_verbs <- testing$num_nouns/testing$num_verbs
+testing$nums_to_adverbs <- testing$num_nouns/testing$num_adverbs
 
 
 #section just temp for this data run
