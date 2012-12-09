@@ -4,7 +4,7 @@ require(plyr)
 library(doMC)
 library(foreach)
 library(caret)
-registerDoMC(2)
+registerDoMC()
 
 training <- read.csv("train_tagged_tfidf.csv")
 nrow(training)
