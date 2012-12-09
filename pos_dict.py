@@ -80,3 +80,7 @@ pos_dict_crappy = {
     "WP$" : "Possessive wh-pronoun",
     "WRB" : "Wh-adverb",
 }
+
+if __name__ == "__main__":
+    for code, explanation in sorted(pos_dict.items()):
+        print code + ": " + explanation

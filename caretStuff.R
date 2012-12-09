@@ -113,17 +113,22 @@ training$holdout[sample(nrow(training), as.integer(nrow(training)*.1))] <- 1
 
 
 #Caret feature selection...
-X <- subset(training, select=-c(grade, essay, rate1, rate2, holdout, pos_UH, pos_NNPS, X, rfprediction, rfscorehat))
+X <- subset(training, select=-c(grade, essay, rate1, rate2, holdout, pos_UH, pos_NNPS, X))
 print(paste(c("Starting columns:", ncol(X))))
 nzv <- nearZeroVar(X)
-filteredX <- X[, -nzv]
+highVarianceX <- X[, -nzv]
 print(paste(c("Filtered by near zero variance:", ncol(filteredX))))
+colnames(X)[nzv]
 
-Xcor <- cor(filteredX)
+Xcor <- cor(highVarianceX)
 highlyCorX <- findCorrelation(Xcor, cutoff=.75)
-filteredX <- filteredX[, -highlyCorX]
-print(paste(c("Filtered by near very high correlation:", ncol(filteredX))))
+filteredX <- highVarianceX[, -highlyCorX]
+print(paste(c("Filtered by near very high correlation:", ncol(filteredX)), "Removing..."))
+colnames(highVarianceX)[highlyCorX]
 filteredX$set <- training$set
+
+print("Left with:")
+colnames(filteredX)
 
 set.seed(1)
 inTrain <- sample(seq(along = training$grade), length(training$grade)/2)
