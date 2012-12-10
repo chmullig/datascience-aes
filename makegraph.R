@@ -29,6 +29,10 @@ palette(c("#E41A1C", "purple", "#A6D854", "#A6761D", "orange", "#377EB8",
 "#FF00AA", "#1B9E77", "turquoise", "#66A61E", "blue", 
 "red", "forest green", "#FC8D62", "orange",
 "#7570B3", "#E78AC3", "#CF0234", "#1B9E77", "#66A61E", 
+"#D95F02", "#E6AB02", "blue", "#E41A1C", "purple", "#A6D854", "#A6761D", "orange", "#377EB8", 
+"#FF00AA", "#1B9E77", "turquoise", "#66A61E", "blue", 
+"red", "forest green", "#FC8D62", "orange",
+"#7570B3", "#E78AC3", "#CF0234", "#1B9E77", "#66A61E", 
 "#D95F02", "#E6AB02", "blue"))
 colors <- palette()
 
@@ -59,7 +63,7 @@ par(mar=par()$mar+c(0,0,0,6),bty="l",yaxs="i", xaxs="i")
 plot(xrange, YRANGE, type="n", xaxt='n', xlab="Submission Time", ylab="Score", main=TITLE)
 atx <- seq(mindate, maxdate, by=(maxdate-mindate)/6)
 axis(1, at=atx, labels=format(atx, "%b\n%d"), padj=0.5)
-mtext(side=3, text=paste(nrow(scores), "submissions by", nTeams, "teams as of ", format(maxdate, format="%B %d %Y %l:%M %p")))
+mtext(side=3, text=paste(nrow(scores), "submitted improvements by", nTeams, "teams as of", format(maxdate, format="%B %d %Y %l:%M %p")))
 mtext(side=4, text="Team & Current Score", at=YRANGE[2], las=2, line=-0.5)
 
 colori = 1
@@ -80,6 +84,7 @@ for (TeamName in unique(scores$TeamName)) {
     } else if (min(yvals) == max(yvals)) {
         color <- "gray40"
     } else {
+        print(colori)
         color <- colors[colori]
         colori <- colori + 1
     }
