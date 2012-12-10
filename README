@@ -13,6 +13,7 @@ Implements a few models using R and python. Requirements:
   * plyr
   * MASS
   * ggplot2 (soft requirement)
+  * reshape (soft requirement)
 
 #Features Created/Used
 * number of characters
