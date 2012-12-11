@@ -1,7 +1,11 @@
+# chmullig's Kaggle Essay Code
+
 For http://inclass.kaggle.com/c/columbia-university-introduction-to-data-science-fall-2012,
 as part of the class http://columbiadatascience.wordpress.com.
 
-Implements a few models using R and python. Requirements:
+Implements a few models using R and python.
+
+## Requirements:
 * Python (only tested with 2.7)
   * nltk
   * scikit-learn
@@ -15,7 +19,7 @@ Implements a few models using R and python. Requirements:
   * ggplot2 (soft requirement)
   * reshape (soft requirement)
 
-#Features Created/Used
+## Features Created/Used
 * number of characters
 * numer of sentances
 * number of words
@@ -39,14 +43,14 @@ Implements a few models using R and python. Requirements:
 * counts of the NER words (eg number of times they used @MONEY)
 * TF-IDF word and bigram frequencies that were then PCA'd down to 50 cells.
 
-#Models Used
+## Models Used
 * First model was OLS linear regression using a subset of the variables. I trained 5 models, one per essay set, with identical formulas. Shockingly good.
 * Second model was Random Forest regression, again 5 models. Using more variables.
 * Third model was GBM, same formula as random forest, using 5 models.
 
 Also tried doing rfm and gbm with one model using set as a predictor, but it didn't seem to perform as well.
 
-#Basic workflow in buildModel.sh.
+## Basic workflow in buildModel.sh.
 
 1. Run basic_tags.py on test.tsv and train.tsv. This creates almost all the
 features/tags/variables we need to use
